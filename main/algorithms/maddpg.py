@@ -21,7 +21,6 @@ def mlp_model(input, num_outputs, scope, reuse=False, num_units=64, rnn_cell=Non
         out = layers.fully_connected(out, num_outputs=num_outputs, activation_fn=activation_fn)
         return out
 
-# 此函数功能：计算累计折扣回报：
 # r = 0
 # G= for i = 1 range n:
 #   r = gamma * r + reward
@@ -36,7 +35,7 @@ def discount_with_dones(rewards, dones, gamma):
     return discounted[::-1]
 
 
-#  参数更新函数
+#  参数更新
 def make_update_exp(vals, target_vals):
     polyak = 1.0 - 1e-2  # 1.0 - 0.01 = 0.99
     expression = []
@@ -45,26 +44,6 @@ def make_update_exp(vals, target_vals):
     expression = tf.group(*expression)
     return U.function([], [], updates=[expression])
 
-
-# p_train流程：
-"""
-创建策略网络-policy network：
-    设定执行者（actor）的概率分布类型（pdtype）和概率的值（lnP(a)）
-    建立观测状态O和选择动作A的空间placeholder(数据类型)
-    并定义策略（policy）网络结构-MLP(多层感知机-神经网络)
-    判断训练的算法是：
-        if DDPG = True:
-            将local_q_func = True
-    定义评论家(critic)的网络-w和w_target
-    定义用于训练策略网咯（policy network）的损失函数loss-L(theta)，优化器（a_theta,a_w）-学习率
-    定于用于输出loss,输出A的可调用函数-（callable function）
-    免去feed_dict操作————————这是什么意思？
-    
-创建目标策略网络-target policy network：
-    定义目标策略网络（target policy policy）的结构-theta_target(参数),并存储参数
-    软更新方式->（theta_target）参数更新
-    得到目标策略网络(target policy)的输出-A’(动作)
-"""
 def p_train(make_obs_ph_n,
             act_space_n,
             p_index,
@@ -114,13 +93,6 @@ def p_train(make_obs_ph_n,
         # 计算act_pd的 期望 E[act_pd]
         # act_pd.flatparam()  == p
         p_reg = tf.reduce_mean(tf.square(act_pd.flatparam()))
-        """
-          tf.reduce_mean(input_tensor,  待降维的tensor数据
-                  axis=None,         指定的轴，不指定(None)为计算所有元素的均值
-                  keep_dims=False,   False,降维；True,保持tensor矩阵行列数
-                  name=None,         操作名称
-                  reduction_indices=None)  已弃用
-        """
         # 创建动作输入变量的类型空间
         act_input_n = act_ph_n + []
         # 对动作概率分布采样输出到 act_input_n[p_index]
@@ -128,18 +100,6 @@ def p_train(make_obs_ph_n,
         # critic-Q网络输入变量的类型空间为：
         # 状态O+动作输入变量的类型空间placeholder进行第1个维度的张量(placeholder)拼接
         q_input = tf.concat(obs_ph_n + act_input_n, 1)
-        """
-        tensorflow中用来拼接张量的函数tf.concat()
-        用法:tf.concat([tensor1, tensor2, tensor3,...], axis)
-            axis=0     代表在第0个维度拼接
-            axis=1     代表在第1个维度拼接
-            对于一个二维矩阵，第0个维度代表最外层方括号所框下的子集，第1个维度代表内部方括号所框下的子集。维度越高，括号越小。
-            对于这种情况，我可以再解释清楚一点: 
-            对于[ [ ], [ ]]和[[ ], [ ]]，低维拼接等于拿掉最外面括号，高维拼接是拿掉里面的括号(保证其他维度不变)。
-            注意：tf.concat()拼接的张量只会改变一个维度，其他维度是保存不变的。
-            比如两个shape为[2,3]的矩阵拼接，要么通过axis=0变成[4,3]，要么通过axis=1变成[2,6]。改变的维度索引对应axis的值。
-            这样就可以理解多维矩阵的拼接了，可以用axis的设置来从不同维度进行拼接。 
-        """
         # 判断是否使用DDPG算法
         if local_q_func:  # = True
             # critic-Q值网络输入更新为；将状态O张量空间和动作A张量空间第p_index维度的第1个子维度拼接
@@ -158,25 +118,11 @@ def p_train(make_obs_ph_n,
         # train=更新后的损失loss： 输入状态空间O+动作空间A, 输出为loss， 更新目标为更新后的Actor网络变量optimize_expr
         train = U.function(inputs=obs_ph_n + act_ph_n, outputs=loss, updates=[optimize_expr])
         # act为输出动作具体值-训练函数
-        """
-        输入为 agent[p_index]所观测的状态O_index， 输出为取样动作act = act_sample
-        """
+
         act = U.function(inputs=[obs_ph_n[p_index]], outputs=act_sample)
-        # 策略价值？p_value?
-        """
-        输入为 agent[p_index]所观测的状态O，和策略网络输出的动作p，计算得到 p_values应该是对应的动作概率吧pi(Oi;theta)
-        """
-        # 根据当前状态输出的5n个可选动作的概率list
         p_values = U.function([obs_ph_n[p_index]], p)
 
-        # target network-目标网络--> theta_target
-        # 输入为策略网络的输入量-观测状态O'，输出数量（维度）int(act_pdtype_n[p_index].param_shape()[0]),
-        # 定义神经网络为 target_p_func ，64个神经元(num_units)
-        # 计算输出为 目标策略分布target_p, Π(O';theta_target)
-        
-        # target_p = p_func(p_input, int(act_pdtype_n[p_index].param_shape()[0]), scope="target_p_func", num_units=num_units)
-        
-        # 目标网络加入activation_fn=tf.tanh函数
+        # target network-> theta_target
         target_p = p_func(p_input, int(act_pdtype_n[p_index].param_shape()[0]), scope="target_p_func",
                           num_units=num_units,activation_fn=None)
         # 将神经网络"target_p_func"的输出量，通过scope_vars转化为训练的变量列表形式（list）并附加是否可训练标志
@@ -197,26 +143,6 @@ def p_train(make_obs_ph_n,
                      target_act 目标策略网络的输出-Oi‘观测状态下选择的确定性动作Ai'
         """
         return act, train, update_target_p, {'p_values': p_values, 'target_act': target_act}
-
-
-"""
-创建Q值网络：
-    设定执行者actor的概率分布p(x)和概率的值P(A=a)
-    建立观测状态O，动作A和目标函数 的类型空间张量（placeholder）
-    判断训练的算法是：
-        if DDPG = True:
-            local_q_func = True
-    定义评论家(critic)网络——传入策略网络(policy network)的输出结果-A(动作), 获取网络参数w
-    定义用于Q值网络更新的损失函数loss-L(w),优化器(alpha_w, alpha_w_target)-学习率
-    定义可执行函数——输出loss、输出动作值函数Q值——Q估计值
-
-创建目标价值网络：
-    定义目标价值网络(target value network)的结构——> alpha_target 
-    用软更新方式更新目标价值网络（target value network）的参数——alpha_target <—— alpha（参数更新）
-    输出了目标价值网络（target value network）的计算结果——Q‘值——Q真实值
-    
-    
-"""
 
 
 def q_train(make_obs_ph_n,  # 所有agent的观测状态
@@ -282,7 +208,7 @@ def q_train(make_obs_ph_n,  # 所有agent的观测状态
         # 最终动作价值为q_values
         q_values = U.function(obs_ph_n + act_ph_n, q)
         """
-        # target network
+        target network
         """
         # 目标价值网络-critic_target  参数：w_target
         # 输入为q_input-观测状态X+动作A，输出为1阶数，神经网络名称:target_q_fuc, 隐藏层64个神经元，全连接层MLP

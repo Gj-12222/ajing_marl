@@ -7,11 +7,7 @@ import os
 from maddpg.common.distributions import make_pdtype
 from maddpg import AgentTrainer
 from maddpg.trainer.replay_buffer import ReplayBuffer
-""""
-a = [ 8599 959 6549 5469 54 6954 6954 69549]
-b = [ 5469 959 6549  54 6954 6954 8599] 
-c = a - b
-"""
+
 
 def discount_with_dones(rewards, dones, gamma):
     discounted = []
@@ -132,12 +128,7 @@ def q_train(make_obs_ph_n, act_space_n, q_index, q_func, optimizer, grad_norm_cl
         min_q_values = U.function(obs_ph_n + act_ph_n, q)
 
         # target network
-        # 目标孪生Q网络中，会引入噪声 ，那么在CTDE情况下，怎么加，目标策略平滑~ 应该在目标策略网络输出加入噪声 是对的！√的
-        # # 重新修改q_input  # 加入噪声random_normal 并clip到-1~1
-        # act_ph_n[q_index]= tf.clip_by_value(act_ph_n[q_index] + tf.random_normal(len(act_ph_n[q_index])),-1,1)
-        # epsilon_q_input = tf.concat(obs_ph_n + act_ph_n, 1)
-        # if local_q_func:
-        #     epsilon_q_input = tf.concat([obs_ph_n[q_index], act_ph_n[q_index]], 1)
+
         target_q1 = q_func(q_input, 1, scope="target_q1_func", num_units=num_units)[:,0]
         target_q2 = q_func(q_input, 1, scope="target_q2_func", num_units=num_units)[:, 0]
         target_q = tf.minimum(target_q1,target_q2)
@@ -206,7 +197,6 @@ class MATD3AgentTrainer(AgentTrainer):
         update_frequency = 10  # 更新频率
         critic_interval_actor = 3
         if len(self.replay_buffer) < self.max_replay_buffer_len:  return
-        if not t % update_frequency == 0: return
 
         self.replay_sample_index = self.replay_buffer.make_index(self.args.batch_size)
         # collect replay sample from all agents

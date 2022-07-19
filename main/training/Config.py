@@ -1,5 +1,12 @@
 ## 配置文件
 
+# 定义训练所需的参数：
+#     环境相关参数
+#     训练用的超参数定义
+#     checkpointing（用于存储数据和模型）
+#     测试阶段的参数
+# Environment环境相关参数
+
 class Config(object):
     def __init__(self):
         self.scenario = "uavs_5v5"

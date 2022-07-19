@@ -20,6 +20,7 @@ for t = T-1, T-2,...,0:
     Rt =Gt + γλRt+1
 结果：Rt = TD(λ)
 根据TD(λ)的计算公式编写的标准TD(λ)函数
+待测试ing
 """
 def normal_td_lamda(rewards, dones, gamma, lamda, target_q_next):
     pass

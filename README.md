@@ -3,7 +3,7 @@
 
 
 # Install
-pip install -r requirements.tst
+pip install -r requirements.txt
 
 
 # 注释

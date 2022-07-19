@@ -1,0 +1,9 @@
+numpy
+tensorflow<=1.15
+gym<=0.10
+matplotlib
+xlsxwriter
+xlwt
+pandas
+seaborn
+pyglet

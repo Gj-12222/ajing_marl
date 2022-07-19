@@ -1,0 +1,32 @@
+learning curve 是学习曲线。
+
+【代码网址】下面的网址告诉你如何画出那种 用阴影表示方差 被光滑处理后的学习曲线
+[功能超全的强化学习画图脚本](https://github.com/kaixindelele/DRLib/tree/main/spinup_utils)
+【核心代码】 fill_between ---> seaborn.tsplot()
+如果帮到你了，记得给这个github repo 一个 star。
+
+
+============
+其他知识
+============
+参考链接：https://spinningup.openai.com/en/latest/spinningup/bench.html#experiment-details
+
+
+【学习曲线的横轴】表示智能体花费了多少资源去学习，横轴可以是：
+- total step number 智能体在环境中的探索步数，即env.step() 的运行次数（最常用）
+- episode number 智能体探索环境的轮数，即 env.reset() 的运行次数，受到episode step 的影响
+- used time 智能体使用了多长时间去探索，受到设备性能影响
+- epoch 在机器人任务中，1 epoch可能等于50个episode
+
+【学习曲线的纵轴】表示智能体学习成绩高低（策略性能），纵轴可以是：
+- episode return 每轮学习的累计回报。它从 env.reset() 开始记录reward，当done=True时，求和。（最常用）
+- discount episode return 每轮学习的折扣累计回报。与上面不同的是：它求和的同时会乘以 折扣系数gamma，RL智能体最大化的值通常是 折扣累计回报 而不是 累计回报
+- 其他指标。reward用于指导RL训练，有时并不能反映智能体的成绩，它有时候会包含降低风险，鼓励探索等奖励，这类掺杂了其他目标的reward 不能完全反映智能体的策略性能。例如我要训练智能体完成某一件事情，那么我直接统计这件事情被完成的概率就行了，不需要的reward 进行求和（这就是 RL and Control as Inference 的思想）
+
+
+【学习曲线为什么要平滑】
+1. 给定一个策略在随机性很大的env中评估它的性能，我们需要多测几次，才能让测出来的累计回报的方差稳定。这个时候，把方差用 fill_between 画出来，作为learning curve 的阴影部分。
+2. 即便环境随机性小，如果策略更新过于激进，那么每一次更新网络参数后，策略的得分也会发生波动，RL算法的稳定性越差，则波动越大。为了提升学习曲线的可视化效果，我们可以用一些区间平滑方案（用移动窗口算多个点的平均值），或者折扣平滑方案（旧数据乘以gamma，类似于软更新，TensorBoard就是这个方案）。
+
+
+【episode return 累计回报】每轮学习的累计回报。它从 env.reset() 开始记录reward，当done=True时，对所有reward进行求和。

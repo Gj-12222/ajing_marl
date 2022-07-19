@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+<document type="BLUMIND" editor_version="3.1.5079.19139" document_version="3.0.0.0">
+  <!--Create by Blumind, you can download it free from http://www.blumind.org-->
+  <information>
+    <author>阿靖</author>
+    <company>
+    </company>
+    <version>3.0</version>
+    <description>
+    </description>
+  </information>
+  <attributes>
+    <item name="editor_show_sidebar">True</item>
+  </attributes>
+  <charts active_chart="0">
+    <chart name="新页面 1" type="MindMap">
+      <remark>
+      </remark>
+      <layout>LOGIC_RIGHT</layout>
+      <style>
+        <back_color>White</back_color>
+        <fore_color>Black</fore_color>
+        <line_color>LightSlateGray</line_color>
+        <border_color>SlateGray</border_color>
+        <node_back_color>LightGray</node_back_color>
+        <node_fore_color>Black</node_fore_color>
+        <select_color>RoyalBlue</select_color>
+        <hover_color>MediumSlateBlue</hover_color>
+        <link_line_color>Green</link_line_color>
+        <widget_margin>1</widget_margin>
+        <picture_thumb_size>100, 100</picture_thumb_size>
+      </style>
+      <nodes>
+        <node id="1" text="MADDPG核心算法" x="20" y="896" width="145" height="45" text_b="12, 12, 121, 21">
+          <style>
+            <back_color>Silver</back_color>
+            <fore_color>Black</fore_color>
+            <border_color>Black</border_color>
+            <padding>12</padding>
+            <font font_family="宋体" size="12" style="Regular" />
+          </style>
+          <nodes>
+            <node id="2" text="初始化函数&#xD;&#xA;def __init__(self, &#xD;&#xA;name, &#xD;&#xA;model, &#xD;&#xA;obs_shape_n, &#xD;&#xA;act_space_n, &#xD;&#xA;agent_index, &#xD;&#xA;args, &#xD;&#xA;local_q_func=False):" x="245" y="654" width="175" height="171" text_b="2, 2, 171, 167" fold_btn_b="420, 733, 13, 13">
+              <style>
+                <font font_family="宋体" size="12" style="Regular" />
+              </style>
+              <nodes>
+                <node id="3" text="输入参数" x="500" y="727" width="76" height="25" text_b="2, 2, 72, 21" fold_btn_b="576, 733, 13, 13">
+                  <style>
+                    <font font_family="宋体" size="12" style="Regular" />
+                  </style>
+                  <nodes>
+                    <node id="4" text="1  智能体命名-agent_i = name" x="656" y="20" width="241" height="25" text_b="2, 2, 237, 21">
+                      <style>
+                        <font font_family="宋体" size="12" style="Regular" />
+                      </style>
+                    </node>
+                    <node id="5" text="2  智能体数量 n = len(obs_shape_n)" x="656" y="55" width="290" height="25" text_b="2, 2, 286, 21">
+                      <style>
+                        <font font_family="宋体" size="12" style="Regular" />
+                      </style>
+                    </node>
+                    <node id="6" text="3  是第几个智能体的MADDPG  agent_index" x="656" y="90" width="323" height="25" text_b="2, 2, 319, 21">
+                      <style>
+                        <font font_family="宋体" size="12" style="Regular" />
+                      </style>
+                    </node>
+                    <node id="7" text="4  全局变量参数 args" x="656" y="125" width="175" height="25" text_b="2, 2, 171, 21">
+                      <style>
+                        <font font_family="宋体" size="12" style="Regular" />
+                      </style>
+                    </node>
+                    <node id="8" text="5  状态空间-张量形式  obs_ph_n&#xD;&#xA;obs_ph_n = [observation1,2,...,n]" x="656" y="178" width="282" height="43" text_b="2, 2, 278, 39" fold_btn_b="938, 193, 13, 13">
+                      <style>
+                        <font font_family="宋体" size="12" style="Regular" />
+                      </style>
+                      <nodes>
+                        <node id="9" text="按agent编号顺序追加&#xD;&#xA;状态空间obs_shape_n张量形式&#xD;&#xA;obs_shape_n[i] = Box(65)" x="1018" y="169" width="232" height="61" text_b="2, 2, 228, 57" fold_btn_b="1250, 193, 13, 13">
+                          <style>
+                            <font font_family="宋体" size="12" style="Regular" />
+                          </style>
+                          <nodes>
+                            <node id="10" text="给Box(65)建立张量形式，命名为observation_i&#xD;&#xA;super().__init__(tf.placeholder(dtype, # float32&#xD;&#xA;[None] + list(shape), # [Box(65)]&#xD;&#xA;name=name)) # name是名字" x="1330" y="160" width="405" height="79" text_b="2, 2, 401, 75">
+                              <style>
+                                <font font_family="宋体" size="12" style="Regular" />
+                              </style>
+                            </node>
+                          </nodes>
+                          <lines>
+                            <line target="10" begin_side="Right" end_side="Left" begin_rect="1018, 169, 245, 61" end_rect="1326, 156, 413, 87" />
+                          </lines>
+                        </node>
+                      </nodes>
+                      <lines>
+                        <line target="9" begin_side="Right" end_side="Left" begin_rect="656, 178, 295, 43" end_rect="1014, 165, 240, 69" />
+                      </lines>
+                    </node>
+                    <node id="11" text="6  建立Q-Critic网络&#xD;&#xA;self.q_train, self.q_update, self.q_debug = q_train(&#xD;&#xA;            scope=self.name,  # agent的名字， agent1&#xD;&#xA;            make_obs_ph_n=obs_ph_n,  # 所有agent的观测状态空间&#xD;&#xA;            act_space_n=act_space_n, # 所有agent的动作空间&#xD;&#xA;            q_index=agent_index,  # 第index个agent&#xD;&#xA;            q_func=model, # MLP神经网络&#xD;&#xA;            optimizer=tf.train.AdamOptimizer(learning_rate=args.lr),学习率args.lr&#xD;&#xA;            grad_norm_clipping=0.5,  # 梯度修剪&#xD;&#xA;            local_q_func=local_q_func,  # = True 为DDPG算法&#xD;&#xA;            num_units=args.num_units  # num_units神经网络的128个神经元)" x="656" y="374" width="677" height="207" text_b="2, 2, 673, 203" fold_btn_b="1333, 471, 13, 13">
+                      <style>
+                        <text_align>Left</text_align>
+                        <font font_family="宋体" size="12" style="Regular" />
+                      </style>
+                      <nodes>
+                        <node id="12" text="Q-Critic网络:&#xD;&#xA;根据输入动作空间大小，得到动作分布空间&#xD;&#xA;获取观测状态的张量形式&#xD;&#xA;对动作分布空间转化为张量形式&#xD;&#xA;获取名为target网络的张量变量target_ph&#xD;&#xA;拼接观测状态+动作的张量为q_input&#xD;&#xA;输入MLP，输出Q值-q&#xD;&#xA;获取Critic网络的变量参数-w&#xD;&#xA;计算Critic网络的损失函数q_loss&#xD;&#xA;计算q值均方是bellman粘度解q_reg&#xD;&#xA;得到总损失方程loss&#xD;&#xA;根据minimize优化器求loss关于w的梯度并向着梯度方向更新w获得op_q&#xD;&#xA;根据状态-动作+target_ph-Q，用op_q更新loss，输出更新后loss=q_train&#xD;&#xA;计算q值-调试信息&#xD;&#xA;目标target_Critic网络：&#xD;&#xA;根据状态-动作，获取target_q值&#xD;&#xA;获取target_Critic网络变量-target_w&#xD;&#xA;软更新target_w&#xD;&#xA;输入状态-动作，输出target_q-target_q_values调试信息&#xD;&#xA;" x="1413" y="249" width="545" height="353" text_b="2, 2, 541, 349">
+                          <style>
+                            <text_align>Left</text_align>
+                            <font font_family="宋体" size="12" style="Regular" />
+                          </style>
+                        </node>
+                        <node id="13" text="self.q_train" x="1413" y="613" width="109" height="22" text_b="2, 2, 105, 18" fold_btn_b="1522, 618, 13, 13">
+                          <style>
+                            <font font_family="宋体" size="12" style="Regular" />
+                          </style>
+                          <nodes>
+                            <node id="1" text="计算更新后的loss值" x="1602" y="612" width="158" height="25" text_b="2, 2, 154, 21">
+                              <style>
+                                <font font_family="宋体" size="12" style="Regular" />
+                              </style>
+                            </node>
+                          </nodes>
+                          <lines>
+                            <line target="1" begin_side="Right" end_side="Left" begin_rect="1413, 613, 122, 22" end_rect="1598, 608, 166, 33" />
+                          </lines>
+                        </node>
+                        <node id="14" text="self.q_update" x="1413" y="648" width="117" height="22" text_b="2, 2, 113, 18" fold_btn_b="1530, 653, 13, 13">
+                          <style>
+                            <font font_family="宋体" size="12" style="Regular" />
+                          </style>
+                          <nodes>
+                            <node id="2" text="计算软更新后的target_Critic网络变量-target_w" x="1610" y="647" width="372" height="25" text_b="2, 2, 368, 21">
+                              <style>
+                                <font font_family="宋体" size="12" style="Regular" />
+                              </style>
+                            </node>
+                          </nodes>
+                          <lines>
+                            <line target="2" begin_side="Right" end_side="Left" begin_rect="1413, 648, 130, 22" end_rect="1606, 643, 380, 33" />
+                          </lines>
+                        </node>
+                        <node id="15" text="self.q_debug" x="1413" y="683" width="109" height="22" text_b="2, 2, 105, 18" fold_btn_b="1522, 688, 13, 13">
+                          <style>
+                            <font font_family="宋体" size="12" style="Regular" />
+                          </style>
+                          <nodes>
+                            <node id="3" text="计算Critic网络与target_Critic网络的输出值信息" x="1602" y="682" width="381" height="25" text_b="2, 2, 377, 21">
+                              <style>
+                                <font font_family="宋体" size="12" style="Regular" />
+                              </style>
+                            </node>
+                          </nodes>
+                          <lines>
+                            <line target="3" begin_side="Right" end_side="Left" begin_rect="1413, 683, 122, 22" end_rect="1598, 678, 389, 33" />
+                          </lines>
+                        </node>
+                      </nodes>
+                      <lines>
+                        <line target="12" begin_side="Right" end_side="Left" begin_rect="656, 374, 690, 207" end_rect="1409, 245, 553, 361" />
+                        <line target="13" begin_side="Right" end_side="Left" begin_rect="656, 374, 690, 207" end_rect="1409, 609, 117, 30" />
+                        <line target="14" begin_side="Right" end_side="Left" begin_rect="656, 374, 690, 207" end_rect="1409, 644, 125, 30" />
+                        <line target="15" begin_side="Right" end_side="Left" begin_rect="656, 374, 690, 207" end_rect="1409, 679, 117, 30" />
+                      </lines>
+                    </node>
+                    <node id="16" text="7  建立a-Actor网络&#xD;&#xA;self.act, self.p_train, self.p_update, self.p_debug = p_train(&#xD;&#xA;            scope=self.name,  # agent的序号 agent%d&#xD;&#xA;            make_obs_ph_n=obs_ph_n,  # 状态空间&#xD;&#xA;            act_space_n=act_space_n,  # 动作空间&#xD;&#xA;            p_index=agent_index,  # 第i个agent&#xD;&#xA;            p_func=model,  # MLP网络-Actor&#xD;&#xA;            q_func=model,  # MLP网络-Critic&#xD;&#xA;            optimizer=tf.train.AdamOptimizer(learning_rate=args.lr),学习率-lr&#xD;&#xA;            grad_norm_clipping=0.5,  # 梯度修剪因子&#xD;&#xA;            local_q_func=local_q_func,  # 判断使用DDPG算法&#xD;&#xA;            num_units=args.num_units  # 神经网络的全连接层为64个神经元)" x="656" y="896" width="644" height="225" text_b="2, 2, 640, 221" fold_btn_b="1300, 1002, 13, 13">
+                      <style>
+                        <text_align>Left</text_align>
+                        <font font_family="宋体" size="12" style="Regular" />
+                      </style>
+                      <nodes>
+                        <node id="17" text="P-Actor网络:&#xD;&#xA;基于输入动作类型，获取动作分布张量形式&#xD;&#xA;根据动作分布张量形式，采样得到动作的张量形式&#xD;&#xA;设定状态张量形式&#xD;&#xA;以self.obs为输入MLP得到动作空间的概率p&#xD;&#xA;把Actor网络变量转化为训练的list形式&#xD;&#xA;根据p的概率以及动作分布类型得到张量概率&#xD;&#xA;从动作张量分布概率加入噪声得到最终动作分布概率&#xD;&#xA;计算动作张量分布概率的平均值&#xD;&#xA;把动作分布类型张量作为Actor网络的输入&#xD;&#xA;再对该agent动作加入噪声得到agent最终动作分布概率&#xD;&#xA;Q网络输入为[观测状态+动作]，得到Q网络值&#xD;&#xA;取-平均Q值作为bellman最优方程粘度解 代替 初始条件&#xD;&#xA;再+0.001*bellman最优方程粘度解为最终损失&#xD;&#xA;利用优化器，最小化损失loss，得到神经网络变量优化梯度&#xD;&#xA;根据神经网络变量梯度，更新Actor神经网络变量&#xD;&#xA;根据agent观测状态，在Actor网络输出为最终动作分布概率张量act&#xD;&#xA;根据agent观测状态，在Actor网络输出为所有可选动作概率p_value&#xD;&#xA;目标P-Actor网络：&#xD;&#xA;根据输入状态，再次获取所有可选动作的概率target_p&#xD;&#xA;提取Actor_target网络的所有变量-target_p_vars&#xD;&#xA;软更新target_p_vars&#xD;&#xA;在动作分布张量中融入target_p+softmax得到最终动作分布概率&#xD;&#xA;计算目标网络的动作target_act" x="1380" y="717" width="496" height="444" text_b="2, 2, 492, 440">
+                          <style>
+                            <text_align>Left</text_align>
+                            <font font_family="宋体" size="12" style="Regular" />
+                          </style>
+                        </node>
+                        <node id="18" text="self.act" x="1380" y="1172" width="76" height="22" text_b="2, 2, 72, 18" fold_btn_b="1456, 1177, 13, 13">
+                          <style>
+                            <font font_family="宋体" size="12" style="Regular" />
+                          </style>
+                          <nodes>
+                            <node id="4" text="计算Actor网络的动作概率" x="1536" y="1171" width="199" height="25" text_b="2, 2, 195, 21">
+                              <style>
+                                <font font_family="宋体" size="12" style="Regular" />
+                              </style>
+                            </node>
+                          </nodes>
+                          <lines>
+                            <line target="4" begin_side="Right" end_side="Left" begin_rect="1380, 1172, 89, 22" end_rect="1532, 1167, 207, 33" />
+                          </lines>
+                        </node>
+                        <node id="19" text="self.p_train" x="1380" y="1207" width="109" height="22" text_b="2, 2, 105, 18" fold_btn_b="1489, 1212, 13, 13">
+                          <style>
+                            <font font_family="宋体" size="12" style="Regular" />
+                          </style>
+                          <nodes>
+                            <node id="5" text="计算Actor网络更新后的损失loss" x="1569" y="1206" width="249" height="25" text_b="2, 2, 245, 21">
+                              <style>
+                                <font font_family="宋体" size="12" style="Regular" />
+                              </style>
+                            </node>
+                          </nodes>
+                          <lines>
+                            <line target="5" begin_side="Right" end_side="Left" begin_rect="1380, 1207, 122, 22" end_rect="1565, 1202, 257, 33" />
+                          </lines>
+                        </node>
+                        <node id="20" text="self.p_update" x="1380" y="1242" width="117" height="22" text_b="2, 2, 113, 18" fold_btn_b="1497, 1247, 13, 13">
+                          <style>
+                            <font font_family="宋体" size="12" style="Regular" />
+                          </style>
+                          <nodes>
+                            <node id="6" text="计算软更新target_Actor网络的变量-targrt_p" x="1577" y="1241" width="348" height="25" text_b="2, 2, 344, 21">
+                              <style>
+                                <font font_family="宋体" size="12" style="Regular" />
+                              </style>
+                            </node>
+                          </nodes>
+                          <lines>
+                            <line target="6" begin_side="Right" end_side="Left" begin_rect="1380, 1242, 130, 22" end_rect="1573, 1237, 356, 33" />
+                          </lines>
+                        </node>
+                        <node id="21" text="self.p_debug" x="1380" y="1277" width="109" height="22" text_b="2, 2, 105, 18" fold_btn_b="1489, 1282, 13, 13">
+                          <style>
+                            <font font_family="宋体" size="12" style="Regular" />
+                          </style>
+                          <nodes>
+                            <node id="7" text="计算Actor网络与target_Actor网络的输出信息" x="1569" y="1276" width="348" height="25" text_b="2, 2, 344, 21">
+                              <style>
+                                <font font_family="宋体" size="12" style="Regular" />
+                              </style>
+                            </node>
+                          </nodes>
+                          <lines>
+                            <line target="7" begin_side="Right" end_side="Left" begin_rect="1380, 1277, 122, 22" end_rect="1565, 1272, 356, 33" />
+                          </lines>
+                        </node>
+                      </nodes>
+                      <lines>
+                        <line target="17" begin_side="Right" end_side="Left" begin_rect="656, 896, 657, 225" end_rect="1376, 713, 504, 452" />
+                        <line target="18" begin_side="Right" end_side="Left" begin_rect="656, 896, 657, 225" end_rect="1376, 1168, 84, 30" />
+                        <line target="19" begin_side="Right" end_side="Left" begin_rect="656, 896, 657, 225" end_rect="1376, 1203, 117, 30" />
+                        <line target="20" begin_side="Right" end_side="Left" begin_rect="656, 896, 657, 225" end_rect="1376, 1238, 125, 30" />
+                        <line target="21" begin_side="Right" end_side="Left" begin_rect="656, 896, 657, 225" end_rect="1376, 1273, 117, 30" />
+                      </lines>
+                    </node>
+                    <node id="22" text="8  创建记忆库&#xD;&#xA;self.replay_buffer = ReplayBuffer(1e6) " x="656" y="1311" width="323" height="43" text_b="2, 2, 319, 39">
+                      <style>
+                        <font font_family="宋体" size="12" style="Regular" />
+                      </style>
+                    </node>
+                    <node id="23" text="9  更新间隔&#xD;&#xA;self.max_replay_buffer_len = args.batch_size * args.max_episode_len" x="656" y="1364" width="562" height="43" text_b="2, 2, 558, 39">
+                      <style>
+                        <font font_family="宋体" size="12" style="Regular" />
+                      </style>
+                    </node>
+                    <node id="24" text="10 提取记忆库索引&#xD;&#xA;self.replay_sample_index = None" x="656" y="1417" width="265" height="43" text_b="2, 2, 261, 39">
+                      <style>
+                        <font font_family="宋体" size="12" style="Regular" />
+                      </style>
+                    </node>
+                  </nodes>
+                  <lines>
+                    <line target="4" begin_side="Right" end_side="Left" begin_rect="500, 727, 89, 25" end_rect="652, 16, 249, 33" />
+                    <line target="5" begin_side="Right" end_side="Left" begin_rect="500, 727, 89, 25" end_rect="652, 51, 298, 33" />
+                    <line target="6" begin_side="Right" end_side="Left" begin_rect="500, 727, 89, 25" end_rect="652, 86, 331, 33" />
+                    <line target="7" begin_side="Right" end_side="Left" begin_rect="500, 727, 89, 25" end_rect="652, 121, 183, 33" />
+                    <line target="8" begin_side="Right" end_side="Left" begin_rect="500, 727, 89, 25" end_rect="652, 174, 290, 51" />
+                    <line target="11" begin_side="Right" end_side="Left" begin_rect="500, 727, 89, 25" end_rect="652, 370, 685, 215" />
+                    <line target="16" begin_side="Right" end_side="Left" begin_rect="500, 727, 89, 25" end_rect="652, 892, 652, 233" />
+                    <line target="22" begin_side="Right" end_side="Left" begin_rect="500, 727, 89, 25" end_rect="652, 1307, 331, 51" />
+                    <line target="23" begin_side="Right" end_side="Left" begin_rect="500, 727, 89, 25" end_rect="652, 1360, 570, 51" />
+                    <line target="24" begin_side="Right" end_side="Left" begin_rect="500, 727, 89, 25" end_rect="652, 1413, 273, 51" />
+                  </lines>
+                </node>
+              </nodes>
+              <lines>
+                <line target="3" begin_side="Right" end_side="Left" begin_rect="245, 654, 188, 171" end_rect="496, 723, 84, 33" />
+              </lines>
+            </node>
+            <node id="25" text="action函数&#xD;&#xA;def action(self, &#xD;&#xA;obs):" x="245" y="1470" width="142" height="61" text_b="2, 2, 138, 57" fold_btn_b="387, 1494, 13, 13">
+              <style>
+                <font font_family="宋体" size="12" style="Regular" />
+              </style>
+              <nodes>
+                <node id="8" text="获取动作的概率值&#xD;&#xA;return self.act(obs[None])[0]" x="467" y="1482" width="175" height="36" text_b="2, 2, 171, 32" />
+              </nodes>
+              <lines>
+                <line target="8" begin_side="Right" end_side="Left" begin_rect="245, 1470, 155, 61" end_rect="463, 1478, 183, 44" />
+              </lines>
+            </node>
+            <node id="26" text="经验存储函数&#xD;&#xA;def experience(self, &#xD;&#xA;obs, &#xD;&#xA;act, &#xD;&#xA;rew, &#xD;&#xA;new_obs, &#xD;&#xA;done, &#xD;&#xA;terminal):" x="245" y="1541" width="175" height="152" text_b="2, 2, 171, 148">
+              <style>
+                <font font_family="宋体" size="12" style="Regular" />
+              </style>
+            </node>
+            <node id="27" text="参数更新函数&#xD;&#xA;def update(self, agents, &#xD;&#xA;t):" x="245" y="1703" width="208" height="61" text_b="2, 2, 204, 57" fold_btn_b="453, 1727, 13, 13">
+              <style>
+                <font font_family="宋体" size="12" style="Regular" />
+              </style>
+              <nodes>
+                <node id="9" text="子主题 1" x="533" y="1723" width="56" height="21" text_b="2, 2, 52, 17" />
+              </nodes>
+              <lines>
+                <line target="9" begin_side="Right" end_side="Left" begin_rect="245, 1703, 221, 61" end_rect="529, 1719, 64, 29" />
+              </lines>
+            </node>
+            <node id="28" text="重置从记忆库取样的索引&#xD;&#xA;def preupdate(self):" x="245" y="1774" width="191" height="43" text_b="2, 2, 187, 39">
+              <style>
+                <font font_family="宋体" size="12" style="Regular" />
+              </style>
+            </node>
+          </nodes>
+          <lines>
+            <line target="2" begin_side="Right" end_side="Left" begin_rect="20, 896, 145, 45" end_rect="241, 650, 183, 179" />
+            <line target="25" begin_side="Right" end_side="Left" begin_rect="20, 896, 145, 45" end_rect="241, 1466, 150, 69" />
+            <line target="26" begin_side="Right" end_side="Left" begin_rect="20, 896, 145, 45" end_rect="241, 1537, 183, 160" />
+            <line target="27" begin_side="Right" end_side="Left" begin_rect="20, 896, 145, 45" end_rect="241, 1699, 216, 69" />
+            <line target="28" begin_side="Right" end_side="Left" begin_rect="20, 896, 145, 45" end_rect="241, 1770, 199, 51" />
+          </lines>
+        </node>
+      </nodes>
+    </chart>
+  </charts>
+</document>

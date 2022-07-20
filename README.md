@@ -5,7 +5,18 @@
  
  The environment only integrates MPE, and the algorithm currently only has the form of CTDE and independent learning(IL) + DRL.
  
+
 # Install
+### Requirenments
+python  v3.7.0+
+
+Windows 10 or Linux x86\_84
+
+### Install dependencies
+You can install the latest sversion of the from a cloned Git repository:
+
+git clone https://github.com/Gj-12222/ajing_marl
+
 pip install -r requirements.txt
 
 # run 
@@ -13,7 +24,7 @@ cd main/training
 
 python train.py
 
-# 注释
+### 注释
 main文件是可运行程序
 
 test文件是待测试程序

@@ -13,7 +13,7 @@ python  v3.7.0+
 Windows 10 or Linux x86\_84
 
 ### Install dependencies
-You can install the latest sversion of the from a cloned Git repository:
+You can install the latest version of the from a cloned Git repository:
 
 git clone https://github.com/Gj-12222/ajing_marl
 

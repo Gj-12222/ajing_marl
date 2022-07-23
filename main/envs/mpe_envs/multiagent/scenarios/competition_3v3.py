@@ -12,7 +12,7 @@ comput_range = 0.6
 
 class Scenario(BaseScenario):
     def make_world(self):
-        print("**********guojing set scenario*************")
+
         world = World()
         # set any world properties first
         world.dim_c = 2
@@ -297,7 +297,6 @@ class Scenario(BaseScenario):
                     if len(dis) > 0:
                         rew -= 0.1 * min(dis)
         '''
-        # 根据距离来定义奖励，距离越远，奖励越低，距离越近，奖励越大，但都是-奖励
         if shape: 
             dis = []
             for a in agents:
@@ -318,45 +317,43 @@ class Scenario(BaseScenario):
         rew += 0.1*(eat_num-by_eat_num)
         '''
         
-        # 累计 red的agent被blue方分别攻击的次数
+
         self.compute_lock_num(agent, world)
-        # red攻击blue的奖励
+
         if agent.collide:
             for ag in agents:
-                for i,adv in enumerate(adversaries):  # red方
+                for i,adv in enumerate(adversaries):
                     ###changed by liyuan
-                    # 计算每个red对ag的攻击，ag未死，ad未死
-                    if self.is_collision(adv,ag) and ag.death == False and adv.death == False:
-                    #if self.ag.lock_num[i]>=3 and ag.death == False and adv.death == False:
-                        if adv is agent:  # 如果agent是此个red
-                            rew += 4  # +4
-                        else:  #不是agent攻击的，
-                            rew += 2  # +2
-                        break  # 判断red对下一个ag的攻击，
 
-        # blue攻击red的奖励
+                    if self.is_collision(adv,ag) and ag.death == False and adv.death == False:
+                        if adv is agent:
+                            rew += 4  # +4
+                        else:
+                            rew += 2  # +2
+                        break
+
+
         if agent.collide:
             for ag in agents:
                 for i,adv in enumerate(adversaries):
                     if self.is_collision(ag,adv) and ag.death == False and adv.death == False:
-                    #if self.ag.lock_num[i]>=3 and ag.death == False and adv.death == False:
-                        if not (adv is agent):  # 如果agent不是被攻击的那个
-                            rew -= 2  # 奖励-2？？？？
+                        if not (adv is agent):
+                            rew -= 2
         
         ###if the red agent is eatten
         if agent.collide:
             for i,ag in enumerate(agents):
-                # ag攻击了agent
+
                 if self.is_collision(ag, agent) and ag.death == False:
                 #if ag.death == False and agent.lock_num[i]>=3:
-                    agent.death = True  # agent 死亡
-                    rew -= 4            # 奖励
+                    agent.death = True
+                    rew -= 4
                     break
 
-        # adv是red方-边界限定
+
         for adv in adversaries:
-            if adv.death == False:  # adv存活
-                exceed = False  # ？
+            if adv.death == False:
+                exceed = False
                 for p in range(world.dim_p):
                     x = abs(adv.state.p_pos[p])
                     if (x > 1.0):
@@ -422,42 +419,22 @@ class Scenario(BaseScenario):
                 other_chi.append(tmp_chi)
 
         action_number=[np.zeros(5)]
-        pv = len(agent.state.p_vel)  # 2      2  自身位置
-        pp = len(agent.state.p_pos)  # 2      2  自身速度
-        ep = len(entity_pos)         # 2m     0  障碍物相对位置
-        op = len(other_pos)          # 2(n-1) 22 其他agent相对距离
-        ov = len(other_vel)          # 2(n-1) 22 其他agent的速度
-        oc = len(our_chi)            # 1      1  自身角度
-        ohc = len(other_chi)         # n-1    11 其他agent角度
-        an = len(action_number)      # 5      5  离散动作
-        all_shape = np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos + other_vel + our_chi + other_chi + action_number)
-        """ash = all_shape.shape[0]
-        print('pv=', pv)
-        print('pp=', pp)
-        print('ep=', ep)
-        print('op=', op)
-        print('ov=', ov)
-        print('oc=', oc)
-        print('ohc=', ohc)
-        print('an=', an)
-        print('all_shape=',all_shape)
-        print('ash=', ash)"""
-        #comm.append(other.state.c)
-            #other_pos.append(other.state.p_pos - agent.state.p_pos)
-            #if not other.adversary:
-                #other_vel.append(other.state.p_vel)
+        all_shape = np.concatenate([agent.state.p_vel] +
+                                   [agent.state.p_pos] +
+                                   entity_pos + other_pos +
+                                   other_vel +
+                                   our_chi +
+                                   other_chi +
+                                   action_number)
         return all_shape
-# m个障碍物 n个agent
-# 2+2+2m+2(n-1)+2(n-1)+1+(n-1)+5 = 6n-6+1+5+4+2m = 2m+5n+5 = 2*0+5*12+5= 65
+
     ##added by liyuan: if all green nodes die, this epsoid is over.
-    ##added by liyuan: if all green nodes die, this epsoid is over.
-    # 如果所有的绿色节点都死了，这个插曲就结束了。
-    def done(self, agent, world):  # 终止条件判定
-        allDie = True  # 所有agent死亡
-        agents = self.good_agents(world)  # 绿色-敌方
+    def done(self, agent, world):
+        allDie = True
+        agents = self.good_agents(world)
         for agent in agents:
             if agent.death == False:
-                allDie = False  # 若有绿色存活
+                allDie = False
                 break
-        # 只要有1个绿色存活 allDie = False
+
         return allDie

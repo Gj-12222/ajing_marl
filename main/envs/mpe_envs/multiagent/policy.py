@@ -1,16 +1,16 @@
 import numpy as np
 from pyglet.window import key
 
-# individual agent policy 私有agent策略
+# individual agent policy
 class Policy(object):
     def __init__(self):
         pass
     def action(self, obs):
         raise NotImplementedError()
 
-# interactive policy based on keyboard input # 基于键盘输入的交互式策略
+# interactive policy based on keyboard input
 
-# hard-coded to deal only with movement, not communication # 硬编码只处理移动，而不是交流
+# hard-coded to deal only with movement, not communication
 
 class InteractivePolicy(Policy):
     def __init__(self, env, agent_index):

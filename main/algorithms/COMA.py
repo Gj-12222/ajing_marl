@@ -334,7 +334,7 @@ class COMAAgentTrainer(AgentTrainer):
             obs_shape=warpper_obs_tuple_to_list)
 
         # ③记忆库
-        self.on_policy_replay_buffer = OnPolicyReplayBuffer(self.args.max_episode_len)  # max step的 容量
+        self.on_policy_replay_buffer = ReplayBuffer(self.args.max_episode_len)  # max step的 容量
 
         self.max_replay_buffer_len = args.max_episode_len  # 存满了再批量更新
         self.replay_sample_index = None
@@ -513,8 +513,8 @@ class COMAAgentTrainer(AgentTrainer):
         saver.restore(U.get_session(), file_name + self.name + '/actor/')
 
 
-"""普通的回放记忆库   OnPolicyReplayBuffer"""
-class OnPolicyReplayBuffer(object):
+""" ReplayBuffer"""
+class  ReplayBuffer(object):
 
     def __init__(self, size):
         self._storage = []

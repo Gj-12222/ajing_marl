@@ -1,44 +1,40 @@
 """
 
-plot_loss.py  绘制loss等图像
+plot_loss.py
+Only support to export the data(.pkl) of default env(uav_env) of library
+注意事项：
+*在转化为txt时，应该选择带文本标识符的txt文件 UTF-8
+*选择文件路径：change reward_target_logdir
+*选择列命名文件：change reward_names 文件内容 = 数据的列命名
+*选择绘制图像：更改 243行以及之后的代码
 
+
+if you want to plot yourself data, you will read this code in .py to coding appropriate code.
 """
-#①读取Excel文件数据
+
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from training.Config import Config
 # 获取路径
-""" 
-注意事项：
-*在转化为txt时，应该选择带文本标识符的txt文件 UTF-8
-*选择文件路径：更改 reward_target_logdir 文件路径
-*选择列命名文件：更改 reward_names 文件内容 = 数据的列命名
-*选择绘制图像：更改 243行以及之后的代码
+args = Config()
+target_logdir = [r"D:"]
 
-"""
+sum_reward_target_logdir = [r"D:"]
+agent_reward_target_logdir = [r"D:"]
+red_blue_sum_rewards_logdir = [r"D:"]
 
-target_logdir = [r"D:\software\PyCharm\pyCharmProject\MADDPG\训练结果图\4V8\新-MASAC\20210817\MASAC"]
-sum_reward_target_logdir = [r"D:\software\PyCharm\pyCharmProject\MADDPG\训练结果图\4V8\新-MASAC\Reward\MASAC"]
-agent_reward_target_logdir = [r"D:\software\PyCharm\pyCharmProject\MADDPG\训练结果图\4V8\新-MASAC\agent_reward\MASAC"]
-red_blue_sum_rewards_logdir = [r"D:\software\PyCharm\pyCharmProject\MADDPG\训练结果图\4V8\新-MASAC\all_reward\MASAC"]
-
-
-save_logdir = [r"D:\software\PyCharm\pyCharmProject\MADDPG\训练结果图\4V8\新-MASAC\MASAC_loss_result"]
-
-test_logdir= [r"D:\software\PyCharm\pyCharmProject\MADDPG\训练结果图\4V8\新-MASAC\test"]
+save_logdir = [r"D:"]
+test_logdir= [r"D:"]
 exp_idx = 0
-units =dict()
+units = dict
 
 # 列数命名
 def names():
     new_names = ['update_times']
     for i in range(12):
-        # if i ==10:
-        #     i = 'J'
-        # if i == 11:
-        #     i = 'Q'
         agent_q1_loss_str = 'agent' + str(i) + '_q1_loss'
         new_names.append(agent_q1_loss_str)
         agent_q2_loss_str = 'agent' + str(i) + '_q2_loss'
@@ -58,7 +54,7 @@ def names():
     return new_names
 new_names = names()
 condition_names = names()
-# condition_names = condition_names[1:33]
+
 reward_names = ['average_rewards']
 red_blue_names = ['red_rewards', 'blue_rewards','sum_rewards']
 agent_reward_names = ['agent0_rewards','agent1_rewards','agent2_rewards','agent3_rewards','agent4_rewards',
@@ -109,7 +105,7 @@ def make_data(logdir, condition =None):
             except:
                 print('Could not read from %s' % os.path.join(root, 'MASAC_VS_MASAC.txt'))
                 continue
-            # 在这里加入所有的-  condition_names
+            # 在这里加入所有的 ondition_names
             for i, condition_name in enumerate(condition_names):
                 condition1 = condition or condition_name or 'exp'
                 condition2 = condition1 + '-' + str(exp_idx)
@@ -121,10 +117,7 @@ def make_data(logdir, condition =None):
                 data.insert(len(data.columns), 'Unit' + str(i), unit)
                 data.insert(len(data.columns), 'Condition1'+ str(i), condition1)
                 data.insert(len(data.columns), 'Condition2'+ str(i), condition2)
-            # 循环完了再加
             exp_idx += 1
-                # data.insert(len(data.columns), 'Performance', data[performance])
-        # data.insert(len(data.columns), 'exp_name',file)
     sub_data.append(data)
     return sub_data
 datas = []
@@ -177,15 +170,6 @@ def plot_data(datas, data_name, xaxis_name,yaxis_name,
     performance_rank_sort_dict = {performance_rank_keys[index]: performance_rank_list[index]
                                   for index in range(len(performance_rank_list))}
     print(performance_rank_list)
-    # 修改data[condition]的名字
-    # for index, datum in enumerate(datas):
-    #     condition_values = datum[condition].values[0]
-    #     if performance:
-    #         p = performance_rank_dict[condition_values]
-    #         datum[condition] = 'P-' + str(np.round(p, 3)) + "-" + datum[condition]
-    #     if rank:
-    #         rank_value = performance_rank_sort_dict[condition_values]
-    #         datum[condition] = 'Rank-' + str(rank_value) + "-" + datum[condition]
     # 拼接图像
     if isinstance(datas, list):
         datas = pd.concat(datas, ignore_index=True)
@@ -194,7 +178,7 @@ def plot_data(datas, data_name, xaxis_name,yaxis_name,
     # datas 按着lenged排序
     datas.sort_values(by=condition1,axis=0)
     # 生成图像
-    """
+    """这是各种 seaborn 的颜色 code 需要自取
     ['Accent', 'Accent_r', 'Blues', 'Blues_r', 'BrBG', 'BrBG_r', 'BuGn', 'BuGn_r', 'BuPu', 
     'BuPu_r', 'CMRmap', 'CMRmap_r', 'Dark2', 'Dark2_r', 'GnBu', 'GnBu_r', 'Greens', 'Greens_r',
      'Greys', 'Greys_r', 'OrRd', 'OrRd_r', 'Oranges', 'Oranges_r', 'PRGn', 'PRGn_r', 'Paired', 
@@ -246,15 +230,15 @@ color_palette = ['Pastel1','Paired','Pastel2', 'Set3', 'autumn','Accent','RdGy',
 x_names = 'update_times'  # x轴名称
 reward_x_names = 'episodes'
 save_name = ''
-estimator = getattr(np, estimator)  # choose what to show on main curve: mean? max? min? getattr() 函数用于返回一个对象属性值。
+estimator = getattr(np, estimator)  # choose what to show on main curve: mean? max? min?
 j = 0
-for i,condition_name in enumerate(condition_names):  # [0-11个agent的数据]
+for i,condition_name in enumerate(condition_names):
     if 'alpha' in condition_name: continue
-    #if i - 2 == 0:
+
     if (i -  (3 * 8) - 3) == 0:
         plt.figure()
         save_name = condition_name[7:]
-    #if (i-2) % 8 == 0:  # i = 0 8 16 24
+    # i = 0 8 16 24
     if (i -  (3 * 8) - 3) > 0 and (i -  (3 * 8) - 3)  % 8 == 0:
         condition1_index = condition1 + str(i)
         condition2_index = condition2 + str(i)
@@ -274,10 +258,7 @@ fig.set_size_inches((16,9), forward=False)
 
 select_str = ''
 exclued_str = ''
-# try:
-#     plt.show()
-# except:
-#     pass
+
 fig.savefig(test_logdir[0] + '\\'+ data_name + save_name + '.png',
             bbox_inches='tight',
             dpi=300)

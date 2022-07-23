@@ -20,6 +20,7 @@ class Config(object):
         self.batch_size = 512
         self.num_units = 128
         # 智能体参数
+        self.uav_hper_parms()
         self.num_adversaries = 5
         self.num_agents = 10
         self.adv_policy = "CTDE"
@@ -34,8 +35,18 @@ class Config(object):
         self.load_dir = "./training/model/load/"
         self.restore = False
         self.display = False
-        # self.plot_dir = "./plot_learning_curve/"
+
+        self.data_file_dir = 'data_name.pkl'
+        self.create_xslx_dir = 'data_name.xlsx'
+        self.plot_dir = "./plot_learning_curve/"
         # 特殊算法固有的参数
         self.init_alpha = 0.02
         self.fix_alpha = True
         self.use_target_actor = True
+
+    def uav_hper_parms(self):
+        self.attack_angle =90
+        self.defense_angle = 90
+        self.fire_range = 30
+        self.comput_range = 0.7
+        self.jam_range = 0.6

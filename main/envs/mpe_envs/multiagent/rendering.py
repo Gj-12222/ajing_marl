@@ -6,7 +6,7 @@ import os
 import six
 import sys
 
-if "Apple" in sys.version: # 获取python解释程序的版本信息
+if "Apple" in sys.version:
     if 'DYLD_FALLBACK_LIBRARY_PATH' in os.environ:
         os.environ['DYLD_FALLBACK_LIBRARY_PATH'] += ':/usr/lib'
         # (JDS 2016/04/15): avoid bug on Anaconda 2.3.0 / Yosemite
@@ -32,50 +32,32 @@ RAD2DEG = 57.29577951308232
 def get_display(spec):
     """Convert a display specification (such as :0) into an actual Display
     object.
-    将显示规范(例如:0)转换为实际的显示对象
-    Pyglet only supports multiple Displays on Linux.Pyglet只支持Linux上的多种显示。
+
+    Pyglet only supports multiple Displays on Linux.
     """
     if spec is None:
         return None
-        # spec与six.string_types是否为同类型，即spec是否为str类型
-    elif isinstance(spec, six.string_types):  # six.string_types在python2中，使用的为basestring；在python3中，使用的为str
+
+    elif isinstance(spec, six.string_types):
         return pyglet.canvas.Display(spec)
-    else:  # spec不是str类型
+    else:
         raise error.Error('Invalid display specification: {}. (Must be a string like :0 or None.)'.format(spec))
 
-# 可视化类Viewer
+
 class Viewer(object):
-    # # 初始化 输入：width宽度，height高度，显示标志display
+
     def __init__(self, width, height, display=None):
         display = get_display(display)
 
         self.width = width
         self.height = height
-        # pyglet.window.Window(width,height) 创建一个新的窗口
+        # pyglet.window.Window(width,height) create a new windows
         self.window = pyglet.window.Window(width=width, height=height, display=display)
-        self.window.on_close = self.window_closed_by_user  # 定义了窗口关闭的参数
+        self.window.on_close = self.window_closed_by_user
         self.geoms = []
         self.onetime_geoms = []
-        self.transform = Transform()   # 获取当前变换的状态
-        """
-        # glEnable用于启用各种功能。功能由参数决定。
-        # glDisable是用来关闭的。两个函数参数取值是一至的。
-        glEnable(GL_BLEND)  # GL_BLEND：启用颜色混合。例如实现半透明效果
-        # glEnable(GL_MULTISAMPLE)
-        glEnable(GL_LINE_SMOOTH)  # GL_LINE_SMOOTH ：	执行后，过虑线段的锯齿
-        # glHint(GL_LINE_SMOOTH_HINT, GL_DONT_CARE)
-        # glHint(int target,int mode) 控制GL某些行为: 参数target是要控制的行为  mode是另一个由符号常量描述的想要执行的行为。
-        # target=GL_LINE_SMOOTH_HINT——表明直线抗锯齿的效果。
-        # mode=GL_NICEST 质量最好
-        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
-        # 根据glEnable(GL_LINE_SMOOTH)，结合width=2.0 启用了反走样处理
-        glLineWidth(2.0)  # width=2.0 参数表示光栅化的线段的宽度
-        # 颜色混合glBlendFunc，在RGBA模式下
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        # 源因子sfactor=GL_SRC_ALPHA表示使用源颜色的alpha值来作为因子（alpha）
-        # 目标因子dfactor=GL_ONE_MINUS_SRC_ALPHA表示用1.0-源颜色的alpha值来作为因子（1-alpha）
-        """
-        # 设置渲染画质-抗锯齿，半透明，反走样，颜色混合等
+        self.transform = Transform()
+
         glEnable(GL_BLEND)
         # glEnable(GL_MULTISAMPLE)
         glEnable(GL_LINE_SMOOTH)
@@ -93,12 +75,11 @@ class Viewer(object):
     # 设定边界： 左，右，下-底，上-顶
     def set_bounds(self, left, right, bottom, top):
         assert right > left and top > bottom  # 要求 右>左 上>下
-        # 均匀刻度数scalex=总宽度/2*cam_range
-        # 均匀刻度数scalex=总高度/2*cam_range
+
         scalex = self.width/(right-left)
         scaley = self.height/(top-bottom)
-        # 尺度变换参数
-        # translation是平移：左-
+
+
         self.transform = Transform(
             translation=(-left*scalex, -bottom*scaley),
             scale=(scalex, scaley))
@@ -110,7 +91,7 @@ class Viewer(object):
     def add_onetime(self, geom):
         self.onetime_geoms.append(geom)
 
-    # 渲染显示或数组
+
     def render(self, return_rgb_array=False):
         glClearColor(1,1,1,1)  # 设置背景颜色 4个参数为 红，绿，蓝，alpha，不会清除颜色
         self.window.clear()  # 清屏
@@ -182,11 +163,9 @@ def _add_attrs(geom, attrs):
 class Geom(object):
     def __init__(self):
         self._color=Color((0, 0, 0, 1.0))
-        # 默认颜色为：红=0，绿=0，蓝=0，不透明度=100%
+
         self.attrs = [self._color]  # 列表形式
     def render(self):
-        # reserved() 是 Pyton 内置函数之一，其功能是对于给定的序列（包括列表、元组、字符串以及 range(n) 区间），
-        # 该函数可以返回一个逆序序列的迭代器（用于遍历该逆序序列）
         for attr in reversed(self.attrs):
             attr.enable()
         self.render1()
@@ -211,17 +190,11 @@ class Transform(Attr):
         self.set_translation(*translation)
         self.set_rotation(rotation)
         self.set_scale(*scale)
-        # guojing gai
-        #self.color = Color((0, 0, 0, 1))  # self.color 是Color类
-        # self.set_color(*color)  # 把color的值传递给self.color.vec4
-        #self.atrr = [self.color]
-
 
     def enable(self):  # 生效
-        # guojing gai
-        # glColor4f(*self.color.vec4)
+
         glPushMatrix()  # 入栈
-        # glTranslatef(x,y,z)是基于当前位置做平移
+
         glTranslatef(self.translation[0], self.translation[1], 0) # translate to GL loc ppint
         glRotatef(RAD2DEG * self.rotation, 0, 0, 1.0)  # 旋转角度RAD2DEG * self.rotation，绕(0-x,0-y,1-z)轴旋转
         glScalef(self.scale[0], self.scale[1], 1)  # 尺度变换，放大缩小
@@ -234,9 +207,6 @@ class Transform(Attr):
         self.rotation = float(new)
     def set_scale(self, newx, newy):  # 设置尺度变化量
         self.scale = (float(newx), float(newy))
-    # guojing
-    #def set_color(self,r,g,b,alpha):
-    #    self.color.vec4 = (r, g, b, alpha)
 
 
 class Color(Attr):
@@ -288,20 +258,18 @@ class FilledPolygon(Geom):  # 多边形顶点
         glEnd()
 
 
-# 制作圆
-# 函数输入量：半径，微分角度
+# make_circle
 def make_circle(radius=10, res=30, filled=True):
     points = []
-    for i in range(res):  # 30等分360度
-        ang = 2*math.pi*i / res  # 角度ang 2pi/30 = pi/15等分30个
+    for i in range(res):
+        ang = 2*math.pi*i / res
         points.append((math.cos(ang)*radius, math.sin(ang)*radius))
     if filled:
         return FilledPolygon(points)
     else:
         return PolyLine(points, True)
-"""guojing changing"""
-# 前向扇形
-# 函数输入量：半径，角度，微分角度
+
+# make_forward_sector
 def make_forward_sector(radius=10, angle_start=-45,angle_end=45 ,res=30, filled=True):
     points = []
     angle = angle_end - angle_start  # 角度
@@ -309,33 +277,19 @@ def make_forward_sector(radius=10, angle_start=-45,angle_end=45 ,res=30, filled=
     start_pi = (angle_start+angle_end)/2 * (math.pi/180)  # 起点角度转化弧度
     # 关于x轴对称扇形
     # 角度+
-    for i in range(res+1):  # 30等分angle_pi度
+    for i in range(res+1):  # res 等分angle_pi度
         if i>=1:
             ang = 0.5*angle_pi*(res/2 - (i-1)) / (res/2) # +角度
             points.append((math.cos(start_pi + ang) * radius, math.sin(start_pi + ang) * radius))
         else:
             points.append((math.cos(math.pi/2) *radius, math.sin(0) * radius))  # 圆心
-        # 绘制+直线
-        #if i == res:
-        #   make_line((0,0),(math.cos(angle_start+ang)*radius, math.sin(angle_start+ang)*radius))
-    # 角度-
-    #for i in range(res+1):  # 30等分angle_pi度
-    #    if i>=1:
-    #        ang = -0.5*angle_pi*(i-1) / res
-    #        points.append((math.cos(-angle_start+ang)*radius, math.sin(-angle_start+ang)*radius))
-    #    else:
-    #        points.append((math.cos(math.pi/2)* radius, math.sin(0)*radius))  #圆心
-        # 绘制-直线
-        #if i == res:
-        #    make_line((0, 0), (math.cos(-angle_start+ang) * radius, math.sin(-angle_start+ang) * radius))
+
     if filled:
         return FilledPolygon(points)
     else:
         return PolyLine(points, True)
-# 后向扇形
-# def make_backward_sector(radius=10, angle_start=0,angle_end=90 ,res=30, filled=True):
 
-# 绘制五角星-无人机
+# make_uav
 def make_uav(radius=10, res=11, filled=False):
     """
     五角星：  n=[1:2:11];x=sin(0.4*n*pi);y=cos(0.4*n*pi);
@@ -352,7 +306,7 @@ def make_uav(radius=10, res=11, filled=False):
         return FilledPolygon(points)
     else:
         return PolyLine(points, True)
-"""********************************"""
+
 # 渲染多边形
 def make_polygon(v, filled=True):
     if filled: return FilledPolygon(v)

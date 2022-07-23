@@ -1,18 +1,17 @@
 """
 Code for creating a multiagent environment with one of the scenarios listed
-使用列出的场景之一创建多代理环境的代码
+
 in ./scenarios/.
-Can be called by using, for example:可以通过使用调用，例如:
+Can be called by using, for example:
     env = make_env('simple_speaker_listener')
 After producing the env object, can be used similarly to an OpenAI gym
 environment.
-在生成env对象之后，可以像OpenAI gym一样使用环境。
+
 A policy using this environment must output actions in the form of a list
 for all agents. Each element of the list should be a numpy array,
 of size (env.world.dim_p + env.world.dim_c, 1). Physical actions precede
 communication actions in this array. See environment.py for more details.
 
-使用此环境的策略必须以所有代理的列表形式输出操作。列表中的每个元素都应该是一个大小相同的numpy数组
 (env.world。dim_p + env.world。dim_c, 1)。
 在这个数组中，物理动作先于通信动作。参见environment.py了解更多细节。
 """

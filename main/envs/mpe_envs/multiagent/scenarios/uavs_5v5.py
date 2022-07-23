@@ -200,7 +200,7 @@ class Scenario(BaseScenario):
     
     # True if agent1 win, False for others
 
-    def jam_uav(self, agent1, agent2, hit_range =  self.cfg.jam_range):
+    def jam_uav(self, agent1, agent2):
         if agent1.death or agent2.death:
             return False
 
@@ -209,7 +209,7 @@ class Scenario(BaseScenario):
         distance = np.sqrt(np.sum(np.square(delta_pos)))
         if distance <= 1e-5:
             return False
-        if distance < hit_range:
+        if distance < self.cfg.jam_range:
             return True
 
         return False
@@ -469,7 +469,8 @@ class Scenario(BaseScenario):
                 other_roll.append(other.state.p_roll)
                 other_jam.append(other.state.f)
 
-        # action_number=[np.zeros(3)]  # 1个力+1个滚转角速度+ 1个干扰 = 3
+        action_number=[np.zeros(3)]  # 3 acc, roll_a, jam
+
         # pv = len(agent.state.p_vel)  # 2      2  自身位置
         # pp = len(agent.state.p_pos)  # 2      2  自身速度
         # proll=len(agent.state.p_roll)# 1      1  自身滚转角

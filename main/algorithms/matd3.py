@@ -79,7 +79,7 @@ def p_train(make_obs_ph_n, act_space_n, p_index, p_func, q_func, optimizer, grad
 
         target_act_sample = act_pdtype_n[p_index].pdfromflat(target_p).sample()
         target_act_tanh_sample = tf.tanh(target_act_sample)
-        # 加入clip的噪声 在policy输出前加噪声，不应该在Q网络输入前
+        # 加入clip的噪声 在policy输出前加噪声
         epsilon_sample = act_pdtype_n[p_index].pdfromflat(target_p).epsilon_sample()  # 噪声采样
         target_epsilon_act_sample = tf.clip_by_value(target_act_tanh_sample + epsilon_sample,-1,1) # clip到-1~1
 
@@ -193,7 +193,6 @@ class MATD3AgentTrainer(AgentTrainer):
         self.replay_sample_index = None
 
     def update(self, agents, t):
-        # 带有延迟更新的Delayed DDPG
         update_frequency = 10  # 更新频率
         critic_interval_actor = 3
         if len(self.replay_buffer) < self.max_replay_buffer_len:  return
@@ -222,9 +221,9 @@ class MATD3AgentTrainer(AgentTrainer):
         q1_loss = self.q_train[0](*(obs_n + act_n + [target_q]))  # 噪声在target_q里
 
         min_q = self.q_debug["min_q_values"](*(obs_n + act_n))
-        if t % (update_frequency * critic_interval_actor): # 延迟更新actor critic2
+        if t % (update_frequency * critic_interval_actor):
             q2_loss = self.q_train[1](*(obs_n + act_n + [target_q]))
-            # train p network
+
             p_loss = self.p_train(*(obs_n + act_n))
             self.p_update()
         else:
@@ -232,22 +231,21 @@ class MATD3AgentTrainer(AgentTrainer):
             p_loss = [None]
 
         self.q_update[0]()
-        if t % (update_frequency * critic_interval_actor):  # 延迟更新actor critic2
+        if t % (update_frequency * critic_interval_actor):
             self.q_update[1]()
 
         return [q1_loss,q2_loss, p_loss, np.mean(target_q), np.mean(min_q), np.mean(rew), np.mean(target_q_next), np.std(target_q)]
 
-    # 获取神经网络的变量
     def get_scope_var(self,scope):
         return U.scope_vars(U.absolute_scope_name(scope))
-    # 保存模型
+
     def save_model(self,file_name,saver=None):
         os.makedirs(os.path.dirname(file_name + self.name), exist_ok=True)
         var = self.get_scope_var(scope=self.name)
         if saver is None:
            saver = tf.train.Saver(var)
         saver.save(U.get_session(), file_name + self.name+ '/')
-    # 加载模型
+
     def load_model(self, file_name,saver=None):
         os.makedirs(os.path.dirname(file_name + self.name), exist_ok=True)
         var = self.get_scope_var(scope=self.name)
@@ -255,7 +253,6 @@ class MATD3AgentTrainer(AgentTrainer):
             saver = tf.train.Saver(var)
         saver.restore(U.get_session(), file_name + self.name + '/')
 
-    # 保存部分模型-如只保存Actor网络，且不需要目标网络
     def saver_actor_model(self,file_name, steps, saver=None):
         os.makedirs(os.path.dirname(file_name + self.name), exist_ok=True)
 
@@ -264,7 +261,7 @@ class MATD3AgentTrainer(AgentTrainer):
             if saver is None:
                 saver = tf.train.Saver(var)
             saver.save(U.get_session(), file_name + self.name + '/actor/', global_step=steps)
-    # 加载actor模型
+
     def load_actor_model(self,file_name, saver=None):
         os.makedirs(os.path.dirname(file_name + self.name), exist_ok=True)
         if saver is None:

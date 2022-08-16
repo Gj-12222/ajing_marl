@@ -3,7 +3,7 @@ r'''
 environment config file
 
 '''
-env = 'uav_5vr5'
+env = 'uav_5v5'
 # pv = len(agent.state.p_vel)  # 2      2  自身位置
 # pp = len(agent.state.p_pos)  # 2      2  自身速度
 # proll=len(agent.state.p_roll)# 1      1  自身滚转角

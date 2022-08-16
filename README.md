@@ -25,6 +25,4 @@ cd main/training
 python train.py
 
 ### 注释
-main文件是可运行程序
-
-test文件是待测试程序
+the environment config in envs/env_config.py

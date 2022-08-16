@@ -307,12 +307,12 @@ def make_uav(radius=10, res=11, filled=False):
     else:
         return PolyLine(points, True)
 
-# 渲染多边形
+
 def make_polygon(v, filled=True):
     if filled: return FilledPolygon(v)
     else: return PolyLine(v, True)
 
-# 渲染直线
+
 def make_polyline(v):
     return PolyLine(v, False)
 

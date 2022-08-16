@@ -29,16 +29,16 @@ class Config(object):
         self.good_algorithm = "maddpg"
         # 保存模型数据的配置参数
         self.save_name = "4v8_uav"
-        self.save_model_dir = "./training/model/save/"
-        self.save_data_dir = "./training/data/learning_curves/"
+        self.save_model_dir = "/training/model/save/"
+        self.save_data_dir = "/training/data/learning_curves/"
         self.save_rate = 2
-        self.load_dir = "./training/model/load/"
+        self.load_dir = "/training/model/load/"
         self.restore = False
         self.display = False
 
         self.data_file_dir = 'data_name.pkl'
         self.create_xslx_dir = 'data_name.xlsx'
-        self.plot_dir = "./plot_learning_curve/"
+        self.plot_dir = "./training/model/plot_learning_curve/"
         # 特殊算法固有的参数
         self.init_alpha = 0.02
         self.fix_alpha = True

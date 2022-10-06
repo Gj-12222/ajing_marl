@@ -1,5 +1,5 @@
 class AgentTrainer(object):
-    def __init__(self, name, model, obs_shape, act_space, args):
+    def __init__(self, name, obs_shape_n, act_space_n, agent_index, args, local_q_func):
         raise NotImplemented()
 
     def action(self, obs):
@@ -11,5 +11,5 @@ class AgentTrainer(object):
     def preupdate(self):
         raise NotImplemented()
 
-    def update(self, agents):
+    def update(self, agents, t):
         raise NotImplemented()

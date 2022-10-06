@@ -17,7 +17,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-from training.Config import Config
+from config.Config import Config
 # 获取路径
 args = Config()
 target_logdir = [r"D:"]

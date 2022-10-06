@@ -1,5 +1,5 @@
 import xlwt
-from training.Config import Config
+from config.Config import Config
 import matplotlib.pyplot as plt
 import numpy
 import pickle

@@ -1,5 +1,5 @@
 import xlwt
-from training.Config import Config
+from config.Config import Config
 import matplotlib.pyplot as plt
 import numpy
 import pickle
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     # input datas
     data_file = os.path.join(os.getcwd(),arglist.data_file_dir)
     # create excle
-    create_data_file  = s.path.join(os.getcwd(),arglist.create_xslx_dir)
+    create_data_file  = os.path.join(os.getcwd(),arglist.create_xslx_dir)
 
     excel = xlsxwriter.Workbook(create_data_file)
     sheet = excel.add_worksheet('sheet1')

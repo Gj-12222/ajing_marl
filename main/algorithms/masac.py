@@ -1,22 +1,21 @@
-
-"""
+r'''
 core code for the MASAC algorithm
+（MASAC算法的核心代码）
 自适应alpha (未实现)
+'''
 
-"""
+import os
 import numpy as np
 import random
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
 import tools.tf_util as U
 from tools.distributions import make_pdtype
-from algorithms.replay_buffer import ReplayBuffer
+from tools.replay_buffer import ReplayBuffer
 from algorithms import AgentTrainer
 
-epsilon = 1e-8
-
 # Actor-critic
-def sac_nn(input,num_outputs,scope,  reuse=False, num_units=64, rnn_cell=None,activation_fn=None):
+def mlp_model(input,num_outputs,scope,  reuse=False, num_units=64, rnn_cell=None,activation_fn=None):
     with tf.variable_scope(scope, reuse=reuse):
         out = input
         out = layers.fully_connected(out, num_outputs=num_units, activation_fn=tf.nn.relu)
@@ -35,7 +34,7 @@ def discount_with_dones(rewards, dones, gamma):
         discounted.append(r)
     return discounted[::-1]
 
-
+#  参数更新函数
 def make_update_exp(vals, target_vals):
     polyak = 1.0 - (5*1e-3)
     expression = []
@@ -44,19 +43,20 @@ def make_update_exp(vals, target_vals):
     expression = tf.group(*expression)
     return U.function([], [], updates=[expression])
 
-# log_gaussian_prob
-def log_gaussian_policy(act_resample, act_mu, act_logstd):
-    # log_s = -0.5 *[( x - u)/ (e^log var)]^2 + 2*(log var) + 2*logπ
+# log_prob
+def log_gaussian_policy(act_resample, act_mu, act_logstd, epsilon):
+    # act_resample.shape = [ batch_size , action.shape ]
+    # log_s = -0.5 *[( x - u)/ (e^log var)]^2 + 2*(log var) + 2*logπ # 高斯分布对数形式
     log_normal_sum = -0.5 * (((act_resample - act_mu) / (tf.exp(act_logstd) + epsilon)) ** 2 + 2 * act_logstd + np.log(2 * np.pi))
-    # act_resample = [batch_size, 1]
+    # return [batch_size, 1]
     return tf.reduce_mean(log_normal_sum, axis=1)
 
-# SAC的公式26-27的欧拉变换：修正原始动作分布- 对重新参数化的动作分布概率计算
+# 修正 log_prob
 def euler_transformation(logp_act_resample, act_resample):
-    #                  =  logp_act_resample - 2 * (log 2 - x - log(exp( -2*x ) + 1))
     logp_act_resample -= tf.reduce_mean(2 * (np.log(2) - act_resample - tf.nn.softplus(-2 * act_resample)), axis=1)
     return logp_act_resample
 
+# alpha
 def masac_alpha_log(make_obs_ph_n,
                     act_space_n,
                     p_index,
@@ -77,7 +77,6 @@ def masac_alpha_log(make_obs_ph_n,
             np_alpha_log = np.array([init_alpha_log])
             return np_alpha_log, None
         else:
-
             target_entropy *= np.log(act_space_n[p_index].shape)  # agent对应的动作维度？还是 所有agent的动作维度？
             alpha_log = tf.Variable(init_alpha_log,name="alpha",dtype=tf.float32)
             alpha = tf.convert_to_tensor(tf.exp(alpha_log))
@@ -95,13 +94,12 @@ def masac_alpha_log(make_obs_ph_n,
             actpd_mu = act_pd.mean
             actpd_logstd = act_pd.logstd
 
-            act_resample = act_pd.reparameterization()  # 未归一化
-
+            act_resample = act_pd.reparameterization()
             act_resample = tf.tanh(act_resample)
 
-            logp_act_resample = log_gaussian_policy(act_resample, actpd_mu, actpd_logstd)
+            logp_act_resample = log_gaussian_policy(act_resample, actpd_mu, actpd_logstd, epsilon=1e-8)
+            logp_act_resample = euler_transformation(logp_act_resample, act_resample)
 
-            logp_act_resample = euler_transformation(logp_act_resample, act_resample) # 欧拉变换
             alpha_losses = -(alpha * tf.stop_gradient(logp_act_resample - target_entropy))
             alpha_loss = tf.nn.compute_average_loss(alpha_losses)
             optimize_expr = U.minimize_and_clip(optimizer, alpha_loss, alpha_log, grad_norm_clipping)
@@ -110,7 +108,7 @@ def masac_alpha_log(make_obs_ph_n,
             alpha_values = U.function(inputs=obs_ph_n + act_ph_n, outputs=alpha_log)
             return alpha, train
 
-
+# policy
 def masac_p_train(make_obs_ph_n,
                   act_space_n,
                   p_index,
@@ -130,7 +128,7 @@ def masac_p_train(make_obs_ph_n,
         act_ph_n = [act_pdtype_n[i].sample_placeholder([None], name="action" + str(i)) for i in range(len(act_space_n))]
 
         p_input = obs_ph_n[p_index]
-        if fix:  # 固定
+        if fix:  # 固定α
             alpha = tf.placeholder(tf.float32, [None],name="alpha")
             p = p_func(p_input, int(act_pdtype_n[p_index].param_shape()[0]), reuse=False, scope="p_func",
                        num_units=num_units,
@@ -140,25 +138,19 @@ def masac_p_train(make_obs_ph_n,
             p = p_func(p_input, int(act_pdtype_n[p_index].param_shape()[0]), reuse=True, scope="p_func",
                        num_units=num_units,
                        activation_fn=None)
-
         act_pd = act_pdtype_n[p_index].pdfromflat(p)
         actpd_mu = act_pd.mean
-        actpd_logstd = act_pd.logstd  # logstd from clip(-20,2)
-
+        actpd_logstd = act_pd.logstd # (-20, 2)
         act_resample = act_pd.reparameterization()
-
         act_resample = tf.tanh(act_resample)
 
         logp_act_resample = log_gaussian_policy(act_resample, actpd_mu, actpd_logstd)
-
         logp_act_resample = euler_transformation(logp_act_resample, act_resample)
-
         act_input_n = act_ph_n + []
         act_input_n[p_index] = act_resample
         q_input = tf.concat(obs_ph_n + act_input_n, 1)
         if local_q_func:
             q_input = tf.concat([obs_ph_n[p_index], act_input_n[p_index]], 1)
-
         q1 = q_func(q_input, 1, scope="q1_func", reuse=True, num_units=num_units)[:, 0]
         q2 = q_func(q_input, 1, scope="q2_func", reuse=True, num_units=num_units)[:, 0]
 
@@ -174,7 +166,7 @@ def masac_p_train(make_obs_ph_n,
         act = U.function(inputs=[obs_ph_n[p_index]], outputs=act_resample)
         logp_act = U.function(inputs=[obs_ph_n[p_index]], outputs=logp_act_resample)
         p_values = U.function([obs_ph_n[p_index]], p)
-        """⑨ （可选）构建actor_target网络"""
+
         target_p = p_func(p_input, int(act_pdtype_n[p_index].param_shape()[0]), scope="target_p_func",
                           num_units=num_units, activation_fn=None)
         target_p_func_vars = U.scope_vars(U.absolute_scope_name("target_p_func"))
@@ -188,13 +180,10 @@ def masac_p_train(make_obs_ph_n,
         target_logp_act_resample = euler_transformation(target_logp_act_resample, target_act_resample)
         target_act_mu = tf.tanh(target_actpd_mu)
         target_act_resample = tf.tanh(target_act_resample)
-
         target_act = U.function(inputs=[obs_ph_n[p_index]], outputs=target_act_resample)
         target_logp_act = U.function(inputs=[obs_ph_n[p_index]], outputs=target_logp_act_resample)
         target_p = U.function([obs_ph_n[p_index]], target_p)
-        return act, logp_act, train, update_target_p, \
-               {'target_act': target_act, 'target_logp_act': target_logp_act},
-
+        return act, logp_act, train, update_target_p, {'target_act': target_act, 'target_logp_act': target_logp_act}, 'p_func'
 
 def masac_q_train(make_obs_ph_n,
                   act_space_n,
@@ -207,7 +196,6 @@ def masac_q_train(make_obs_ph_n,
                   reuse=None,
                   num_units=64):
     with tf.variable_scope(scope, reuse=reuse):
-
         act_pdtype_n = [make_pdtype(act_space) for act_space in act_space_n]
         obs_ph_n = make_obs_ph_n
         act_ph_n = [act_pdtype_n[i].sample_placeholder([None], name="action" + str(i)) for i in range(len(act_space_n))]
@@ -253,8 +241,9 @@ def masac_q_train(make_obs_ph_n,
         return [train1, train2], [update_target_q1, update_target_q2], {'min_q_values': min_q_values, 'min_target_q_values': min_target_q_values},
 
 class MASACAgentTrainer(AgentTrainer):
-    def __init__(self, name, model, obs_shape_n, act_space_n, agent_index, args, local_q_func=False,
-                 target_entorpy=1.0):
+    def __init__(self,name, obs_shape_n, act_space_n, agent_index, args, local_q_func=False):
+        super(MASACAgentTrainer, self).__init__(name, obs_shape_n, act_space_n, agent_index, args, local_q_func)
+        # target_entorpy目标熵（未用到）
         self.name = name
         self.n = len(obs_shape_n)
         self.agent_index = agent_index
@@ -262,17 +251,17 @@ class MASACAgentTrainer(AgentTrainer):
         obs_ph_n = []
         for i in range(self.n):
             obs_ph_n.append(U.BatchInput(obs_shape_n[i], name="observation" + str(i)).get())
-        """① alpha自适应更新(未实现)"""
+        """① alpha自适应更新(暂缺)"""
         self.alpha_log, self.alpha_loss = masac_alpha_log(
             scope=self.name,
             make_obs_ph_n=obs_ph_n,
             act_space_n=act_space_n,
             p_index=agent_index,
-            p_func=model,
-            q_func=model,
+            p_func=mlp_model,
+            q_func=mlp_model,
             optimizer=tf.train.AdamOptimizer(learning_rate=args.lr*0.03),
             grad_norm_clipping=0.5,
-            deterministic=args.fix_alpha,  # fix alpha
+            deterministic=args.fix_alpha,  # 固定alpha
             target_entropy=1,
             init_alpha_log=np.log(args.init_alpha),
             local_q_func=local_q_func,
@@ -284,27 +273,27 @@ class MASACAgentTrainer(AgentTrainer):
             make_obs_ph_n=obs_ph_n,
             act_space_n=act_space_n,
             q_index=agent_index,
-            q_func=model,
+            q_func=mlp_model,
             optimizer=tf.train.AdamOptimizer(learning_rate=args.lr * 3 * 0.1),
             grad_norm_clipping=0.5,
             local_q_func=local_q_func,
             num_units=args.num_units
         )
-
-        self.act, self.act_prob, self.p_train, self.p_update, self.p_debug, = masac_p_train(
-            scope=self.name,
+        # 用p_train建立了 策略训练网络（policy tarining network）含有（策略网络，目标策略网络）
+        self.act, self.act_prob, self.p_train, self.p_update, self.p_debug, self.actor_vars = masac_p_train(
+            scope=self.name,  # agent的序号 agent%d
             make_obs_ph_n=obs_ph_n,
             act_space_n=act_space_n,
             p_index=agent_index,
-            p_func=model,
-            q_func=model,
+            p_func=mlp_model,
+            q_func=mlp_model,
             optimizer=tf.train.AdamOptimizer(learning_rate=args.lr * 3 * 0.5),
             grad_norm_clipping=0.5,
             fix=args.fix_alpha,
             local_q_func=local_q_func,
             num_units=args.num_units
         )
-        # Create experience buffer
+        # Create experience buffer 创建经验缓冲区-记忆库
         self.replay_buffer = ReplayBuffer(5e6)
         self.max_replay_buffer_len = args.batch_size * args.max_episode_len
         self.replay_sample_index = None
@@ -313,28 +302,27 @@ class MASACAgentTrainer(AgentTrainer):
     def action(self, obs):
         return self.act(obs[None])[0]
 
-    # (S,A,R,S') to replay_buffer
+    # 将经验（S,A,R,S'）存入经验记忆库replay_buffer
     def experience(self, obs, act, rew, new_obs, done, terminal):
+
         self.replay_buffer.add(obs, act, rew, new_obs, float(1.0)if done==True or terminal==True else float(0.0))
 
     def preupdate(self):
         self.replay_sample_index = None
 
-
+    # 网络更新
     def update(self, agents, t):
-
         if len(self.replay_buffer) < self.max_replay_buffer_len:  # replay buffer is not large enough
             return
         if not t % 10 == 0:
             return
-
         self.replay_sample_index = self.replay_buffer.make_index(self.args.batch_size)
         # collect replay sample from all agents
         obs_n = []
         obs_next_n = []
         act_n = []
         index = self.replay_sample_index
-
+        # buffer_data
         for i in range(self.n):
             obs, act, rew, obs_next, done = agents[i].replay_buffer.sample_index(index)
             obs_n.append(obs)
@@ -344,32 +332,27 @@ class MASACAgentTrainer(AgentTrainer):
 
         num_sample = 1
         Y_target = 0.0
+
+        if self.args.fix_alpha == True:
+            alpha = np.exp(self.alpha_log)
+        else:
+            alpha = np.exp(self.alpha_log(*(obs_n + act_n)))
         for i in range(num_sample):
-
-            if self.args.fix_alpha== True:
-                alpha =np.exp(self.alpha_log) # get fix alpha
-            else:
-                alpha = np.exp(self.alpha_log(*(obs_n+act_n)))  # get adopt alpha
-            p_loss = self.p_train(*(obs_n + act_n+ [alpha]))
-
             # Y = r + (1-d)γ(min_q - alpha*logp_act)
-            if self.args.target_actor:
-
+            if self.args.target_actor: # use tar_policy
                 target_act_next_n = [agents[i].p_debug['target_act'](obs_next_n[i]) for i in range(self.n)]
                 target_logp_act_next_n = agents[self.agent_index].p_debug['target_logp_act'](obs_next_n[self.agent_index])
                 target_min_q_next = self.q_debug['min_target_q_values'](*(obs_next_n + target_act_next_n))
-                Y_target += rew + (1 - done) * self.args.gamma * (target_min_q_next - alpha * target_logp_act_next_n)
             else:
-
                 act_next_n = [agents[i].act(obs_next_n[i]) for i in range(self.n)]
-                log_act_prob_next_n = agents[self.agent_index].act_prob(obs_next_n[self.agent_index])
-
+                target_logp_act_next_n = agents[self.agent_index].act_prob(obs_next_n[self.agent_index])
                 target_min_q_next = self.q_debug['min_target_q_values'](*(obs_next_n + act_next_n))
-                Y_target += rew + (1 - done) * self.args.gamma * (target_min_q_next - alpha * log_act_prob_next_n)  # alpha需要降维取平均
+            Y_target += rew + (1 - done) * self.args.gamma * (target_min_q_next - alpha * target_logp_act_next_n)  # alpha需要降维取平均
         Y_target /= num_sample
         q1_loss = self.q_train[0](*(obs_n + act_n + [Y_target]))
         q2_loss = self.q_train[1](*(obs_n + act_n + [Y_target]))
 
+        p_loss = self.p_train(*(obs_n + act_n + [alpha]))
         if not self.args.fix_alpha:
             log_alpha_loss = self.alpha_loss(*(obs_n + act_n))
         else:
@@ -380,10 +363,10 @@ class MASACAgentTrainer(AgentTrainer):
             self.q_update[i]()
         return [q1_loss, q2_loss, p_loss, np.mean(Y_target), np.mean(rew), np.std(Y_target)]
 
-
+    # 获取神经网络的变量
     def get_scope_var(self, scope):
         return U.scope_vars(U.absolute_scope_name(scope))
-
+    # 保存模型
     def save_model(self, file_name, saver=None):
         os.makedirs(os.path.dirname(file_name + self.name), exist_ok=True)
         var = self.get_scope_var(scope=self.name)
@@ -391,6 +374,7 @@ class MASACAgentTrainer(AgentTrainer):
             saver = tf.train.Saver(var)
         saver.save(U.get_session(), file_name + self.name + '/')
 
+    # 加载模型
     def load_model(self, file_name, saver=None):
         os.makedirs(os.path.dirname(file_name + self.name), exist_ok=True)
         var = self.get_scope_var(scope=self.name + '/')
@@ -398,6 +382,7 @@ class MASACAgentTrainer(AgentTrainer):
             saver = tf.train.Saver(var)
         saver.restore(U.get_session(), file_name + self.name + '/')
 
+    # 保存部分模型-如只保存Actor网络，且不需要目标网络
     def saver_actor_model(self, file_name, steps, saver=None):
         os.makedirs(os.path.dirname(file_name + self.name), exist_ok=True)
         with tf.variable_scope(self.name, reuse=None):
@@ -406,6 +391,7 @@ class MASACAgentTrainer(AgentTrainer):
                 saver = tf.train.Saver(var)
             saver.save(U.get_session(), file_name + self.name + '/actor/', global_step=steps)
 
+    # 加载actor模型
     def load_actor_model(self, file_name, saver=None):
         os.makedirs(os.path.dirname(file_name + self.name), exist_ok=True)
         if saver is None:

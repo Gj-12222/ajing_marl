@@ -1,5 +1,5 @@
 numpy
-tensorflow==1.15
+tensorflow==1.14.0
 gym<=0.10
 matplotlib==3.3.3
 xlsxwriter

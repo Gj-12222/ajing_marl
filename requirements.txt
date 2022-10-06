@@ -1,9 +1,9 @@
 numpy
-tensorflow<=1.15
+tensorflow==1.14.0
 gym<=0.10
-matplotlib
+matplotlib==3.3.3
 xlsxwriter
 xlwt
-pandas
-seaborn
+pandas==1.2.0
+seaborn==0.8.1
 pyglet

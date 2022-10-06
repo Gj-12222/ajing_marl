@@ -20,11 +20,13 @@ git clone https://github.com/Gj-12222/ajing_marl
 pip install -r requirements.txt
 
 # run 
+set source 'main' file to running code.
+
 cd main/training
 
 python train.py
 
-### 注释
-main文件是可运行程序
+### Comments
+The 'main' file is completed codes.
 
-test文件是待测试程序
+The 'test' file is uncompleted codes.

@@ -3,7 +3,7 @@ from envs.mpe_envs.multiagent.core import World, Agent, Landmark
 from envs.mpe_envs.multiagent.scenario import BaseScenario
 import math
 import copy
-from config.Config import Config
+from config.config import Config
 
 
 

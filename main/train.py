@@ -3,10 +3,10 @@ import tensorflow as tf
 import time
 import pickle
 import random
-from config.Config import Config
+from config.config import Config
 import tools.tf_util as U
+from tools.common import seed_np_tf_random
 from algorithms.maddpg import MADDPGAgentTrainer
-
 from algorithms.masac import MASACAgentTrainer
 from algorithms.COMA import COMAAgentTrainer
 
@@ -51,12 +51,6 @@ def get_trainers(env, num_adversaries, obs_shape_n, arglist):
             "agent_%d" % i, obs_shape_n, env.action_space, i, arglist,
             local_q_func=(arglist.good_policy == 'CTDE')))
     return trainers
-
-# seed
-def seed_np_tf_random(seed):
-    np.random.seed(seed)
-    tf.set_random_seed(seed)
-    random.seed(seed)
 
 def train(arglist):
     with U.single_threaded_session():

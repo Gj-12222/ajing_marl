@@ -7,19 +7,23 @@
  
 
 # Install
+
 ### Requirenments
 python  v3.7.0+
 
 Windows 10 or Linux x86\_84
 
-### Install dependencies
+### Install steps
 You can install the latest version of the from a cloned Git repository:
 
-git clone https://github.com/Gj-12222/ajing_marl
+git clone https://github.com/Gj-12222/ajing_marl.git
+
+cd ajing_marl
 
 pip install -r requirements.txt
 
-# run 
+### run 
+
 set source 'main' file to running code.
 
 cd main/training
@@ -27,6 +31,7 @@ cd main/training
 python train.py
 
 ### Comments
+
 The 'main' file is completed codes.
 
 The 'test' file is uncompleted codes.

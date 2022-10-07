@@ -1,13 +1,10 @@
 """
-
-plot_loss.py
-Only support to export the data(.pkl) of default env(uav_env) of library
+plot_learning_curve.py
 注意事项：
 *在转化为txt时，应该选择带文本标识符的txt文件 UTF-8
 *选择文件路径：change reward_target_logdir
 *选择列命名文件：change reward_names 文件内容 = 数据的列命名
 *选择绘制图像：更改 243行以及之后的代码
-
 
 if you want to plot yourself data, you will read this code in .py to coding appropriate code.
 """
@@ -17,19 +14,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-from config.Config import Config
-# 获取路径
-args = Config()
-target_logdir = [r"D:"]
+from config.config import Config
 
-sum_reward_target_logdir = [r"D:"]
-agent_reward_target_logdir = [r"D:"]
-red_blue_sum_rewards_logdir = [r"D:"]
+from matplotlib import font_manager
+from matplotlib import rcParams
 
-save_logdir = [r"D:"]
-test_logdir= [r"D:"]
 exp_idx = 0
-units = dict
+units = dict()
+
 
 # 列数命名
 def names():
@@ -52,35 +44,17 @@ def names():
         agent_std_y_target_str = 'agent' + str(i) + '_std(Y_target)'
         new_names.append(agent_std_y_target_str)
     return new_names
-new_names = names()
-condition_names = names()
 
-reward_names = ['average_rewards']
-red_blue_names = ['red_rewards', 'blue_rewards','sum_rewards']
-agent_reward_names = ['agent0_rewards','agent1_rewards','agent2_rewards','agent3_rewards','agent4_rewards',
-                'agent5_rewards','agent6_rewards','agent7_rewards','agent8_rewards','agent9_rewards','agent10_rewards','agent11_rewards']
-# 提取所有文件路径
-logdirs= []
-for logdir in target_logdir:
-    if os.path.isdir(logdir) and logdir[-1] == os.sep:
-        logdirs += [logdir]
-    else:
-        basedir = os.path.dirname(logdir)
-        fulldir = lambda x: os.path.join(basedir,x)
-        prefix = logdir.split(os.sep)[-1]
-        print('basedir=',basedir)
-        listdir = os.listdir(basedir)
-        logdirs += sorted([fulldir(x) for x in listdir if prefix in x])
 
 # 获取data
-def make_data(logdir, condition =None):
+def make_data(logdir, condition=None):
     global exp_idx
     global units
     exp_names = []
     roots = []
     sub_data = []
     for root, _, files in os.walk(logdir):
-        if 'MASAC_VS_MASAC.txt' in files:
+        if 'data.txt' in files:
             exp_name = None
             try:
                 exp_name = files[0][:-4]
@@ -93,19 +67,19 @@ def make_data(logdir, condition =None):
     for key, value in roots_names_dict.items():
         print(key, value)
     # 排序
-    roots_names_list = sorted(roots_names_dict.items(), key=lambda x:x[0])
-    roots_names_dict = {tup[0]:tup[1] for tup in roots_names_list}
+    roots_names_list = sorted(roots_names_dict.items(), key=lambda x: x[0])
+    roots_names_dict = {tup[0]: tup[1] for tup in roots_names_list}
 
     for file, roots in roots_names_dict.items():
         for root in roots:
-            log = os.path.join(root, 'MASAC_VS_MASAC.txt')  #
+            log = os.path.join(root, 'data.txt')  #
             print(log)
             try:
                 data = pd.read_table(log)
             except:
-                print('Could not read from %s' % os.path.join(root, 'MASAC_VS_MASAC.txt'))
+                print('Could not read from %s' % os.path.join(root, 'data.txt'))
                 continue
-            # 在这里加入所有的 ondition_names
+            # 在这里加入所有的 condition_names
             for i, condition_name in enumerate(condition_names):
                 condition1 = condition or condition_name or 'exp'
                 condition2 = condition1 + '-' + str(exp_idx)
@@ -115,31 +89,28 @@ def make_data(logdir, condition =None):
                 units[condition1] += 1
                 # performance = 'agent0_q1_loss'
                 data.insert(len(data.columns), 'Unit' + str(i), unit)
-                data.insert(len(data.columns), 'Condition1'+ str(i), condition1)
-                data.insert(len(data.columns), 'Condition2'+ str(i), condition2)
+                data.insert(len(data.columns), 'Condition1' + str(i), condition1)
+                data.insert(len(data.columns), 'Condition2' + str(i), condition2)
             exp_idx += 1
-    sub_data.append(data)
+            sub_data.append(data)
     return sub_data
-datas = []
-for sub_logdir in logdirs: # 对每个数据文件提取数据
-    datas += make_data(logdir=sub_logdir)
+
 
 # 绘制图像
-def plot_data(datas, data_name, xaxis_name,yaxis_name,
+def plot_data(datas, data_name, xaxis_name, yaxis_name,
               condition1="Condtition1",
-              condition2="Condtition1",
+              condition2="Condtition2",
               unit="Unit1",
               color_index='deep',
-              smooth =1,
-              linewidth = 4,
-              rank = True,
-              performance = True,
+              smooth=1,
+              linewidth=4,
+              rank=True,
+              performance=True,
               **kwargs):
-
     performance_rank_dict = {}
     condition2_list = []
     y = np.ones(smooth)
-    for i,datum in enumerate(datas):
+    for i, datum in enumerate(datas):
         condition2_list.append(datum[condition2].values[0])
         row, columns = datum.shape
         # 对每一列都求滑动平均
@@ -149,9 +120,9 @@ def plot_data(datas, data_name, xaxis_name,yaxis_name,
         datum[yaxis_name] = smooth_x
         # 平均性能
         if datum[condition1].values[0] not in performance_rank_dict.keys():
-            performance_rank_dict[datum[condition1].values[0]] = np.mean(smooth_x[-len(smooth_x)//10:])
+            performance_rank_dict[datum[condition1].values[0]] = np.mean(smooth_x[-len(smooth_x) // 10:])
         else:
-            performance_rank_dict[datum[condition1].values[0]] += np.mean(smooth_x[-len(smooth_x)//10:])
+            performance_rank_dict[datum[condition1].values[0]] += np.mean(smooth_x[-len(smooth_x) // 10:])
     # 多个随机种子取平均
     for key in performance_rank_dict.keys():
         seed_num = sum([1 for _ in condition2_list if key in _])
@@ -173,10 +144,10 @@ def plot_data(datas, data_name, xaxis_name,yaxis_name,
     # 拼接图像
     if isinstance(datas, list):
         datas = pd.concat(datas, ignore_index=True)
-    sns.set(style="darkgrid", font_scale=1.75,)
+    sns.set(style="darkgrid", font_scale=1.75, )
 
     # datas 按着lenged排序
-    datas.sort_values(by=condition1,axis=0)
+    datas.sort_values(by=condition1, axis=0)
     # 生成图像
     """这是各种 seaborn 的颜色 code 需要自取
     ['Accent', 'Accent_r', 'Blues', 'Blues_r', 'BrBG', 'BrBG_r', 'BuGn', 'BuGn_r', 'BuPu', 
@@ -201,7 +172,7 @@ def plot_data(datas, data_name, xaxis_name,yaxis_name,
                color=sns.color_palette(color_index, len(datas)),
                **kwargs)
     # 设定图像位置
-    plt.legend(loc='upper right',
+    plt.legend(loc='lower left',
                ncol=1,
                framealpha=0.2,  # 不透明度，0.2表明有20%的不透明度
                handlelength=6,
@@ -210,56 +181,111 @@ def plot_data(datas, data_name, xaxis_name,yaxis_name,
     # loc='upper center', 'lower right',  'upper left',  'upper left'          mode="expand",
     xscale = np.max(np.asarray(datas[xaxis_name])) > 5e3
     if xscale:
-        plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+        plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     plt.tight_layout(pad=0.5)
 
-# 绘制图像
-smooth= 50  # 滑动窗口尺寸
-estimator = 'mean'
-linewidth = 4
-rank = True  # 排序
-performance = True  # 性能
-data_name = 'MASAC_VS_MASAC_'
-condition1 = 'Condition1' # 未加随机种子
-condition2 = 'Condition2' # 加入随机种子
-unit = 'Unit'
-condition1_index = None
-condition2_index = None
-unit_index = None
-color_palette = ['Pastel1','Paired','Pastel2', 'Set3', 'autumn','Accent','RdGy','Blues_r']
-x_names = 'update_times'  # x轴名称
-reward_x_names = 'episodes'
-save_name = ''
-estimator = getattr(np, estimator)  # choose what to show on main curve: mean? max? min?
-j = 0
-for i,condition_name in enumerate(condition_names):
-    if 'alpha' in condition_name: continue
 
-    if (i -  (3 * 8) - 3) == 0:
-        plt.figure()
-        save_name = condition_name[7:]
-    # i = 0 8 16 24
-    if (i -  (3 * 8) - 3) > 0 and (i -  (3 * 8) - 3)  % 8 == 0:
-        condition1_index = condition1 + str(i)
-        condition2_index = condition2 + str(i)
-        unit_index = unit + str(i)
-        plot_data(datas=datas,data_name=data_name +condition_name ,xaxis_name=x_names, yaxis_name=condition_name,
-                  condition1=condition1_index,condition2=condition2_index,unit=unit_index,color_index=color_palette[j],
-                  smooth=smooth,estimator=estimator,linewidth=linewidth,rank=rank,performance=performance)
-        j +=  1
+if __name__ == '__main__':
+    # 获取路径
+    args = Config()
+    target_logdir = [os.path.join(args.save_data_dir, '赵琳\\data\\win_dataset_txt\\win_dataset_')]
+    save_logdir = [os.path.join(args.save_data_dir, '赵琳\\data\\win_dataset_txt')]
 
-manager = plt.get_current_fig_manager()
-try:
-    manager.resize(*manager.window.maxsize())
-except:
-    manager.window.showMaximized()
-fig = plt.gcf()
-fig.set_size_inches((16,9), forward=False)
+    condition_names = ['Episode_rewards', '本文算法', 'IDQN', 'IDDQN', 'ID3QN']
 
-select_str = ''
-exclued_str = ''
+    reward_names = ['average_rewards']
+    red_blue_names = ['red_rewards', 'blue_rewards', 'sum_rewards']
+    agent_reward_names = ['agent0_rewards', 'agent1_rewards', 'agent2_rewards', 'agent3_rewards', 'agent4_rewards',
+                          'agent5_rewards', 'agent6_rewards', 'agent7_rewards', 'agent8_rewards', 'agent9_rewards',
+                          'agent10_rewards', 'agent11_rewards']
+    # 提取所有文件路径
+    logdirs = []
+    for logdir in target_logdir:
+        if os.path.isdir(logdir) and logdir[-1] == os.sep:
+            logdirs += [logdir]
+        else:
+            basedir = os.path.dirname(logdir)
+            fulldir = lambda x: os.path.join(basedir, x)
+            prefix = logdir.split(os.sep)[-1]
+            print('basedir=', basedir)
+            listdir = os.listdir(basedir)
+            logdirs += sorted([fulldir(x) for x in listdir if prefix in x])
 
-fig.savefig(test_logdir[0] + '\\'+ data_name + save_name + '.png',
-            bbox_inches='tight',
-            dpi=300)
+    datas = []
+    for sub_logdir in logdirs:  # 对每个数据文件提取数据
+        datas += make_data(logdir=sub_logdir)
 
+    # 绘制图像
+    smooth = 50  # 滑动窗口尺寸
+    estimator = 'mean'
+    linewidth = 4
+    rank = True  # 排序
+    performance = True  # 性能
+    data_name = 'data_'
+    condition1 = 'Condition1'  # 未加随机种子
+    condition2 = 'Condition2'  # 加入随机种子
+    unit = 'Unit'
+    condition1_index = None
+    condition2_index = None
+    unit_index = None
+    color_palette = ['Pastel1', 'Paired', 'Pastel2', 'Set3', 'autumn', 'Accent', 'RdGy', 'Blues_r']
+    x_names = 'Episodes'  # x轴名称
+    # y_names = 'Episode rewards' # y轴名称
+    save_name = ''
+    estimator = getattr(np, estimator)  # choose what to show on main curve: mean? max? min?
+    j = 0
+    for i, condition_name in enumerate(condition_names):
+        # if 'alpha' in condition_name: continue
+        #
+        # if (i - (3 * 8) - 3) == 0:
+        #     plt.figure()
+        #     save_name = condition_name[7:]
+        # # i = 0 8 16 24
+        # if (i - (3 * 8) - 3) > 0 and (i - (3 * 8) - 3) % 8 == 0:
+        if i == 0:
+            plt.figure()
+            save_name = x_names
+        else:
+            condition1_index = condition1 + str(i)
+            condition2_index = condition2 + str(i)
+            unit_index = unit + str(i)
+            plot_data(datas=datas,
+                      data_name=data_name + condition_name,
+                      xaxis_name=x_names,
+                      yaxis_name=condition_name,
+                      condition1=condition1_index,
+                      condition2=condition2_index,
+                      unit=unit_index,
+                      color_index=color_palette[j],
+                      smooth=smooth,
+                      estimator=estimator,
+                      linewidth=linewidth,
+                      rank=rank,
+                      performance=performance)
+            j += 1
+
+    manager = plt.get_current_fig_manager()
+    try:
+        # matplotlib3.3.4 work
+        manager.resize(*manager.window.maxsize())
+    except:
+        # matplotlib3.2.1//2.2.3 work
+        manager.window.showMaximized()
+    fig = plt.gcf()
+    fig.set_size_inches((16, 9), forward=False)
+
+    # 字体加载
+    font_path = os.path.join(os.getcwd(),'plot_tool\\tnw_simsun.ttf')
+    font_manager.fontManager.addfont(font_path)
+    prop = font_manager.FontProperties(fname=font_path)
+    print(prop.get_name())  # 显示当前使用字体的名称
+
+    # 字体设置
+    rcParams['font.family'] = 'sans-serif'  # 使用字体中的无衬线体
+    rcParams['font.sans-serif'] = prop.get_name()  # 根据名称设置字体
+    rcParams['font.size'] = 10  # 设置字体大小
+    rcParams['axes.unicode_minus'] = False  # 使坐标轴刻度标签正常显示正负号
+
+    fig.savefig(save_logdir[0] + '\\' + data_name + save_name + '.svg',
+                bbox_inches='tight',
+                dpi=600)

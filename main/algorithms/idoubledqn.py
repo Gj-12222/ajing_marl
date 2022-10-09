@@ -70,7 +70,6 @@ def q_train(make_obs_n,
 
 class IDoubleDQNAgentTrainer(AgentTrainer):
     def __init__(self, name, obs_shape_n, act_space_n, agent_index, args, local_q_func=False):
-        super(IDoubleDQNAgentTrainer, self).__init__(name, obs_shape_n, act_space_n, agent_index, args, local_q_func)
         # ①定义变量
         self.name=name
         self.agent_index = agent_index

@@ -242,7 +242,6 @@ def masac_q_train(make_obs_ph_n,
 
 class MASACAgentTrainer(AgentTrainer):
     def __init__(self,name, obs_shape_n, act_space_n, agent_index, args, local_q_func=False):
-        super(MASACAgentTrainer, self).__init__(name, obs_shape_n, act_space_n, agent_index, args, local_q_func)
         # target_entorpy目标熵（未用到）
         self.name = name
         self.n = len(obs_shape_n)

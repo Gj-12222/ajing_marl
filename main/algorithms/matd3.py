@@ -166,7 +166,6 @@ def get_scope_var(scope):
 
 class MATD3AgentTrainer(AgentTrainer):
     def __init__(self, name, obs_shape_n, act_space_n, agent_index, args, local_q_func=False):
-        super(MATD3AgentTrainer, self).__init__(name, obs_shape_n, act_space_n, agent_index, args, local_q_func)
         self.name = name
         self.n = len(obs_shape_n)
         self.agent_index = agent_index

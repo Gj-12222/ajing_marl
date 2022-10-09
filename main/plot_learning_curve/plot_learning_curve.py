@@ -22,7 +22,6 @@ from matplotlib import rcParams
 exp_idx = 0
 units = dict()
 
-
 # 列数命名
 def names():
     new_names = ['update_times']
@@ -286,6 +285,7 @@ if __name__ == '__main__':
     rcParams['font.size'] = 10  # 设置字体大小
     rcParams['axes.unicode_minus'] = False  # 使坐标轴刻度标签正常显示正负号
 
+    # 保存文件
     fig.savefig(save_logdir[0] + '\\' + data_name + save_name + '.svg',
                 bbox_inches='tight',
                 dpi=600)

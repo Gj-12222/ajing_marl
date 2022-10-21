@@ -22,7 +22,7 @@ class Config(object):
         # 智能体参数
         self.uav_hper_parms()
         self.num_adversaries = 5
-        self.num_agents = 10
+        self.num_agents = 5
         self.adv_policy = "CTDE"
         self.good_policy = "CTDE"
         self.adv_algorithm = "masac"

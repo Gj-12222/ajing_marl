@@ -21,9 +21,9 @@ class Scenario(BaseScenario):
         world.dim_p = 2  # location XY
         world.dim_f = 1 #
         num_red_agents = self.cfg.num_adversaries
-        num_blue_agents = self.cfg.num_agents - self.cfg.num_adversaries
+        num_blue_agents = self.cfg.num_agents
 
-        num_agents = self.cfg.num_agents
+        num_agents = num_red_agents + num_blue_agents
         num_landmarks = 0
 
         self.num_blue = copy.deepcopy(num_blue_agents)

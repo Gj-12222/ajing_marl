@@ -255,14 +255,10 @@ class MultiAgentEnv(gym.Env):
                         sensitivity = agent.accel
                     agent.action.u *= sensitivity
 
-                    if math.isnan(action[0][1]):
-                        action[0][1] = 1
                     if abs(action[0][1]) > 1:
                         action[0][1] = 1 / action[0][1]
-                    agent.action.r = action[0][1] * 23 * math.pi / 180
+                    agent.action.r = action[0][1] * 2.3 * math.pi / 180
 
-                    if math.isnan(action[0][2]):
-                        action[0][2] = 1
                     if action[0][2] >= 0:
                         agent.action.f = 1
                     else:

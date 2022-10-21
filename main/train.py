@@ -143,7 +143,7 @@ def train(arglist):
             # for displaying learned policies
             if arglist.display:
                 env.render()
-                continue
+                # continue
 
             # update all trainers, if not in display or benchmark mode
             if train_step % 100 == 0:

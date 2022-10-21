@@ -393,12 +393,12 @@ class MultiAgentEnv(gym.Env):
                     viewer.geoms = []
                     for geom in self.render_geoms:
                         viewer.add_geom(geom)
-                    for geom_attact_sector in self.render_geoms:
-                        viewer.add_geom(geom_attact_sector)
-                    for geom_defence_sector in self.render_geoms:
-                        viewer.add_geom(geom_defence_sector)
-                    for geom_explore in self.render_geoms:
-                        viewer.add_geom(geom_explore)
+                    # for geom_attact_sector in self.render_geoms:
+                    #     viewer.add_geom(geom_attact_sector)
+                    # for geom_defence_sector in self.render_geoms:
+                    #     viewer.add_geom(geom_defence_sector)
+                    # for geom_explore in self.render_geoms:
+                    #     viewer.add_geom(geom_explore)
 
         results = []
 

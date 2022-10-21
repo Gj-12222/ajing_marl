@@ -65,7 +65,7 @@ def train(arglist):
 
         # Initialize
         U.initialize()
-        if arglist.display or arglist.restore:
+        if arglist.load_model:
             print('初始化加载 Loading previous state...')
             if arglist.load_dir == " ":
                 arglist.load_dir = arglist.save_dir
@@ -126,7 +126,9 @@ def train(arglist):
                     win[1] += 1
                 else:
                     win[2] += 1  #
-                print('红方胜{}次，蓝方胜{}次，平局{}次！'.format(win[0],win[1],win[2]))
+                print('The number of victories for the red team is {}，'
+                      'the number of victories for the blue team is {}，'
+                      'the close game is {}！'.format(win[0],win[1],win[2]))
                 save_win.append(win)
                 obs_n = env.reset()
                 episode_step = 0
@@ -174,38 +176,38 @@ def train(arglist):
                 rew_file_name = arglist.save_data_dir + arglist.exp_name + '_rewards.pkl'
                 with open(rew_file_name, 'wb') as fp:
                     pickle.dump(final_ep_rewards, fp)
-                    print('存储ep_rewards成功！')
+                    print('save ep_rewards successfully！')
 
                 agrew_file_name = arglist.save_data_dir + arglist.exp_name + '_agrewards.pkl'
 
                 with open(agrew_file_name, 'wb') as fp:
 
                     pickle.dump(final_ep_ag_rewards, fp)
-                    print('存储ag_rewards成功！')
+                    print('save ag_rewards successfully！')
                 agloss_file_name = arglist.save_data_dir + arglist.exp_name + '_agloss.pkl'
                 with open(agloss_file_name, 'wb') as fp:
                     pickle.dump(agent_sum_loss, fp)
-                    print('存储ag_loss成功！')
+                    print('save ag_loss successfully！')
 
                 good_file_name = arglist.save_data_dir + arglist.exp_name + '_good_death.pkl'
                 with open(good_file_name, 'wb') as fp:
                     pickle.dump(good_death_num, fp)
-                    print('存储good_death_num成功！')
+                    print('save good_death_num successfully！')
 
                 adv_file_name = arglist.save_data_dir + arglist.exp_name + '_adv_death.pkl'
                 with open(adv_file_name, 'wb') as fp:
                     pickle.dump(adv_death_num, fp)
-                    print('存储adv_death_num成功！')
+                    print('save adv_death_num successfully！')
 
                 all_rew_name = arglist.save_data_dir + arglist.exp_name + '_everyep_allrew.pkl'
                 with open(all_rew_name, 'wb') as fp:
                     pickle.dump(episode_rewards, fp)
-                    print('存储all_rew成功！')
+                    print('save all_rew successfully！')
 
                 agrew_name = arglist.save_data_dir + arglist.exp_name + '_everyep_agrew.pkl'
                 with open(agrew_name, 'wb') as fp:
                     pickle.dump(agent_rewards, fp)
-                    print('存储agrew成功！')
+                    print('save agrew successfully！')
 
                 print('...Finished total of {} episodes.'.format(len(episode_rewards)))
                 break

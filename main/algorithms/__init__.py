@@ -1,7 +1,4 @@
 class AgentTrainer(object):
-    def __init__(self, name, obs_shape_n, act_space_n, agent_index, args, local_q_func):
-        pass
-
     def action(self, obs):
         raise NotImplemented()
 

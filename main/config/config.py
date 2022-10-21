@@ -16,25 +16,25 @@ class Config(object):
         self.lr = 1e-4
         self.gamma = 0.99  # 56, 114, 229, 459 的max_episode_len 对应 0.96, 0.98, 0.99, 0.995 的gamma
 
-        self.seed = 3407  # 幸运种子
+        self.seed = 251  # 幸运种子
         self.batch_size = 512
-        self.num_units = 128
+        self.num_units = 256
         # 智能体参数
         self.uav_hper_parms()
         self.num_adversaries = 5
         self.num_agents = 10
         self.adv_policy = "CTDE"
         self.good_policy = "CTDE"
-        self.adv_algorithm = "maddpg"
-        self.good_algorithm = "maddpg"
+        self.adv_algorithm = "masac"
+        self.good_algorithm = "masac"
+        self.display = True
         # 保存模型数据的配置参数
         self.save_name = "4v8_uav"
         self.save_model_dir = "./training/model/save/"
         self.save_data_dir = "./training/data/learning_curves/"
         self.save_rate = 2
         self.load_dir = "./training/model/load/"
-        self.restore = False
-        self.display = False
+        self.load_model = False
 
         self.data_file_dir = 'data_name.pkl'
         self.create_xslx_dir = 'data_name.xlsx'

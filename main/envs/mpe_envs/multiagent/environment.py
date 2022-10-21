@@ -344,14 +344,14 @@ class MultiAgentEnv(gym.Env):
             if self.viewers[i] is None:
                 # import rendering only if we need it (and don't import for headless machines)
                 # from gym.envs.classic_control import rendering
-                from multiagent import rendering
+                from envs.mpe_envs.multiagent import rendering
                 self.viewers[i] = rendering.Viewer(800, 800)
 
         # create rendering geometry
         if self.render_geoms is None:
             # import rendering only if we need it (and don't import for headless machines)
             # from gym.envs.classic_control import rendering
-            from multiagent import rendering
+            from envs.mpe_envs.multiagent import rendering
             self.render_geoms = []
             self.render_geoms_xform = []
             # zgy  *************************
@@ -377,6 +377,7 @@ class MultiAgentEnv(gym.Env):
                 else:
                     geom_explore = rendering.make_circle(2*entity.size)
                     geom_explore.set_color(*entity.color)
+
                 geom.add_attr(xform)
                 geom_attact_sector.add_attr(xform)
                 geom_defence_sector.add_attr(xform)
@@ -405,7 +406,7 @@ class MultiAgentEnv(gym.Env):
         agents = self.world.agents
         le = len(self.viewers)
         for i in range(len(self.viewers)):
-            from multiagent import rendering
+            from envs.mpe_envs.multiagent import rendering
             # update bouds to center around agent
             cam_range = 2
             if self.shared_viewer:  # =true

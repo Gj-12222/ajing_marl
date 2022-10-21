@@ -26,7 +26,7 @@ pip install -r requirements.txt
 
 set source 'main' file to running code.
 
-cd main/training
+cd main
 
 python train.py
 

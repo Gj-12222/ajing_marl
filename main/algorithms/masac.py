@@ -14,6 +14,7 @@ from tools.distributions import make_pdtype
 from tools.replay_buffer import ReplayBuffer
 from algorithms import AgentTrainer
 
+
 # Actor-critic
 def mlp_model(input,num_outputs,scope,  reuse=False, num_units=64, rnn_cell=None,activation_fn=None):
     with tf.variable_scope(scope, reuse=reuse):
@@ -119,6 +120,7 @@ def masac_p_train(make_obs_ph_n,
                   fix=False,
                   local_q_func=False,
                   num_units=64,
+                  args=None,
                   scope="trainer",
                   reuse=None):
     with tf.variable_scope(scope, reuse=reuse):
@@ -144,7 +146,7 @@ def masac_p_train(make_obs_ph_n,
         act_resample = act_pd.reparameterization()
         act_resample = tf.tanh(act_resample)
 
-        logp_act_resample = log_gaussian_policy(act_resample, actpd_mu, actpd_logstd)
+        logp_act_resample = log_gaussian_policy(act_resample, actpd_mu, actpd_logstd, args.epsilon)
         logp_act_resample = euler_transformation(logp_act_resample, act_resample)
         act_input_n = act_ph_n + []
         act_input_n[p_index] = act_resample
@@ -176,7 +178,7 @@ def masac_p_train(make_obs_ph_n,
         target_actpd_mu = act_pdtype_n[p_index].pdfromflat(target_p).mean
         target_actpd_logstd = act_pdtype_n[p_index].pdfromflat(target_p).logstd
         target_act_resample = act_pdtype_n[p_index].pdfromflat(target_p).reparameterization()
-        target_logp_act_resample = log_gaussian_policy(target_act_resample, target_actpd_mu,target_actpd_logstd)
+        target_logp_act_resample = log_gaussian_policy(target_act_resample, target_actpd_mu,target_actpd_logstd, args.epsilon)
         target_logp_act_resample = euler_transformation(target_logp_act_resample, target_act_resample)
         target_act_mu = tf.tanh(target_actpd_mu)
         target_act_resample = tf.tanh(target_act_resample)
@@ -290,7 +292,8 @@ class MASACAgentTrainer(AgentTrainer):
             grad_norm_clipping=0.5,
             fix=args.fix_alpha,
             local_q_func=local_q_func,
-            num_units=args.num_units
+            num_units=args.num_units,
+            args=self.args
         )
         # Create experience buffer 创建经验缓冲区-记忆库
         self.replay_buffer = ReplayBuffer(5e6)

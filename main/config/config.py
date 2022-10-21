@@ -43,7 +43,7 @@ class Config(object):
         self.init_alpha = 0.02
         self.fix_alpha = True
         self.use_target_actor = True
-
+        self.epsilon = 1e-6
     def uav_hper_parms(self):
         self.attack_angle =90
         self.defense_angle = 90

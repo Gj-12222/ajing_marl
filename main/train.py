@@ -126,9 +126,9 @@ def train(arglist):
                     win[1] += 1
                 else:
                     win[2] += 1  #
-                print('The number of victories for the red team is {}，'
-                      'the number of victories for the blue team is {}，'
-                      'the close game is {}！'.format(win[0],win[1],win[2]))
+                print(' red number is {}，'
+                      ' blue number is {}，'
+                      'close-game number is {}！'.format(win[0],win[1],win[2]))
                 save_win.append(win)
                 obs_n = env.reset()
                 episode_step = 0

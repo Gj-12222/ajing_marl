@@ -424,9 +424,9 @@ class MultiAgentEnv(gym.Env):
                     my_chi[0] = agents[e].state.course_angle
 
                 if entity.action.f == 1 and entity.state.f[0] >0:
-                    self.render_geoms[(e+1)*4-1].set_color(*entity.color,alpha=0.15)
+                    self.render_geoms[(e+1)*4-1].set_color(*entity.color,alpha=0.5)
                 else:
-                    self.render_geoms[(e + 1) * 4 - 1].set_color(*entity.color, alpha=0.05)
+                    self.render_geoms[(e + 1) * 4 - 1].set_color(*entity.color, alpha=0.1)
 
                 self.render_geoms_xform[e].set_translation(*entity.state.p_pos)
                 self.render_geoms_xform[e].set_rotation(my_chi[0])

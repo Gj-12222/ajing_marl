@@ -20,10 +20,10 @@ class Scenario(BaseScenario):
         world.dim_c = 1  # communication
         world.dim_p = 2  # location XY
         world.dim_f = 1 #
-        num_red_agents = 4
-        num_blue_agents = 8
+        num_red_agents = self.cfg.num_adversaries
+        num_blue_agents = self.cfg.num_agents - self.cfg.num_adversaries
 
-        num_agents = num_red_agents + num_blue_agents
+        num_agents = self.cfg.num_agents
         num_landmarks = 0
 
         self.num_blue = copy.deepcopy(num_blue_agents)
@@ -63,7 +63,7 @@ class Scenario(BaseScenario):
     def reset_world(self, world):
         # random properties for agents
         for i, agent in enumerate(world.agents):
-            agent.color = np.array([0.35, 0.35, 0.85]) if not agent.adversary else np.array([0.85, 0.35, 0.35])
+            agent.color = np.array([0.45, 0.45, 1]) if not agent.adversary else np.array([1, 0.45, 0.45])
             # random properties for landmarks
         for i, landmark in enumerate(world.landmarks):
             landmark.color = np.array([0.25, 0.25, 0.25])

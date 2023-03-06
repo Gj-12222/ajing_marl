@@ -1,10 +1,11 @@
-# ajing_marl
- This is a personal library that strives to implement various MARL algorithms. 
+# marl
+ This is the MARL algorithms package.
  
  The code style of this library from the openAI maddpg(https://github.com/openai/maddpg) and default environment refers to MPE(https://github.com/openai/multiagent-particle-envs), as well other libraries.
  
  The environment only integrates MPE, and the algorithm currently only has the form of CTDE and independent learning(IL) + DRL.
  
+ In addition, some public RL libraries are also referenced, such as(https://github.com/kaixindelele/DRLib, https://github.com/openai/spinningup)
 
 # Install
 

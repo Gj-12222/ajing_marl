@@ -184,6 +184,7 @@ class MultiAgentEnv(gym.Env):
             obs_n.append(self._get_obs(agent))
         return obs_n
 
+
     # get info used for benchmarking
     def _get_info(self, agent):
         if self.info_callback is None:

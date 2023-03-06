@@ -199,7 +199,10 @@ class MADQNAgentTrainer(AgentTrainer):
         # q = np.choose(self_act,q_probs.T)
         # q = q_probs[self_act]  # [batch_size, 1]
         # 首先获得一个等差序列，为batch_size的数据排序，以方便提取对应索引下的q值
-        action_index_arithmetic_sequence = np.linspace(start=0, stop=len(self_act)-1, num=len(self_act), dtype=np.int64).reshape(-1,1)
+        action_index_arithmetic_sequence = np.linspace(start=0,
+                                                       stop=len(self_act)-1,
+                                                       num=len(self_act),
+                                                       dtype=np.int64).reshape(-1,1)
         self_act = self_act.reshape(-1, 1)
         # 然后按列 axis=1 拼接
         action_indexs = np.concatenate((action_index_arithmetic_sequence,self_act), axis=1)

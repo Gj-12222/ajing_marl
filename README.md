@@ -15,6 +15,7 @@ python  v3.7.0+
 Windows 10 or Linux x86\_84
 
 ### Install steps
+
 You can install the latest version of the from a cloned Git repository:
 
 git clone https://github.com/Gj-12222/ajing_marl.git
@@ -33,6 +34,6 @@ python train.py
 
 ### Comments
 
-The 'main' file is completed codes.
+The 'main' file is completed.
 
-The 'test' file is uncompleted codes.
+The 'test' file is uncompleted.

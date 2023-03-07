@@ -4,6 +4,7 @@ plot_learning_curve.py
 *在转化为txt时，应该选择带文本标识符的txt文件 UTF-8
 *选择文件路径：change reward_target_logdir
 *选择列命名文件：change reward_names 文件内容 = 数据的列命名
+*自定义图例label: condition_names = []
 *选择绘制图像：更改 243行以及之后的代码
 
 if you want to plot yourself data, you will read this code in .py to coding appropriate code.
@@ -190,7 +191,7 @@ if __name__ == '__main__':
     target_logdir = [os.path.join(args.save_data_dir, '赵琳\\data\\win_dataset_txt\\win_dataset_')]
     save_logdir = [os.path.join(args.save_data_dir, '赵琳\\data\\win_dataset_txt')]
 
-    condition_names = ['Episode_rewards', '本文算法', 'IDQN', 'IDDQN', 'ID3QN']
+    condition_names = []  # 这是图例label
 
     reward_names = ['average_rewards']
     red_blue_names = ['red_rewards', 'blue_rewards', 'sum_rewards']

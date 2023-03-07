@@ -1,3 +1,5 @@
+import math
+
 import tensorflow as tf
 import numpy as np
 import tools.tf_util as U
@@ -294,19 +296,19 @@ class DiagGaussianPd(Pd):
     def fromflat(cls, flat):
         return cls(flat)
 
-
     def log_gaussian_policy(self, act_resample, act_mu, act_logstd):
         MIN_LIM = 1e-8
-        log_normal_sum = -0.5 * (((act_resample - act_mu) / (tf.exp(log_std) + MIN_LIM)) ** 2 + 2 * act_logstd + np.log(
+        log_normal_sum = -0.5 * (((act_resample - act_mu) / (tf.exp(act_logstd) + MIN_LIM)) ** 2 + 2 * act_logstd + np.log(
             2 * np.pi))
         return tf.reduce_mean(log_normal_sum, axis=1)
     # 欧拉变换
     def euler_transformation(self, lpgp_act_resample, act_resample):
-        lpgp_act_resample -= tf.reduce_mean(2 * (np.log(2) - pi - tf.nn.softplus(-2 * pi)), axis=1)
+        lpgp_act_resample -= tf.reduce_mean(2 * (np.log(2) - math.pi - tf.nn.softplus(-2 * math.pi)), axis=1)
         return lpgp_act_resample
     # reparameterization
     def reparameterization(self):
         return self.mean + self.std * tf.random_normal(tf.shape(self.mean))
+
     def evaluation_reparameterization(self):
         return self.mean + self.std
 

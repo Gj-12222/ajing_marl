@@ -188,8 +188,8 @@ def plot_data(datas, data_name, xaxis_name, yaxis_name,
 if __name__ == '__main__':
     # 获取路径
     args = Config()
-    target_logdir = [os.path.join(args.save_data_dir, '赵琳\\data\\win_dataset_txt\\win_dataset_')]
-    save_logdir = [os.path.join(args.save_data_dir, '赵琳\\data\\win_dataset_txt')]
+    target_logdir = [os.path.join(args.save_data_dir, '\\win_dataset_txt\\win_dataset_')]
+    save_logdir = [os.path.join(args.save_data_dir, '\\win_dataset_txt')]
 
     condition_names = []  # 这是图例label
 

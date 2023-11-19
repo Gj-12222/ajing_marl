@@ -370,7 +370,7 @@ class COMAAgentTrainer(AgentTrainer):
         for i in range(self.n):
             obs_ph_n.append(U.BatchInput(obs_space_n[i], name="observation" + str(i)).get())
         warpper_obs_tuple_to_list = list(obs_space_n[agent_index])[0] * 4
-        warpper_obs_ph = U.BatchInput([warpper_obs_tuple_to_list + args.num_units],
+        warpper_obs_ph = U.BatchInput([warpper_obs_tuple_to_list + args.hidden_dim],
                                       name="warpper_obs_and_last_hidden_state" + str(self.agent_index)).get()
         """先建立counterfactual网络-再Q网络-再P网络"""
         self.c_train, self.c_target_update, self.c_target_values = counterfactual_train(
@@ -382,7 +382,7 @@ class COMAAgentTrainer(AgentTrainer):
             optimizer=tf.train.AdamOptimizer(learning_rate=args.lr * 0.05),
             grad_norm_clipping=0.5,
             local_func=local_q_func,
-            num_units=args.num_units)
+            num_units=args.hidden_dim)
         # 2.2 建立Q价值网络及计算图
         self.q_train, self.q_targrt_update, self.q_target_values = q_train(
             scope=self.name,
@@ -393,7 +393,7 @@ class COMAAgentTrainer(AgentTrainer):
             optimizer=tf.train.AdamOptimizer(learning_rate=args.lr * 0.05),
             grad_norm_clipping=0.5,
             local_func=local_q_func,
-            num_units=args.num_units)
+            num_units=args.hidden_dim)
         # 2.3 建立策略网络及计算图
         self.act, self.p_train, self.p_target_update, self.p_target_act, self.actor_vars = p_train(
             scope=self.name,
@@ -407,7 +407,7 @@ class COMAAgentTrainer(AgentTrainer):
             optimizer=tf.train.AdamOptimizer(learning_rate=args.lr * 0.1),
             grad_norm_clipping=0.5,  # 梯度裁剪
             local_func=local_q_func,  # 判断使用Signal-agentRL还是Multi-agentRL
-            num_units=args.num_units,
+            num_units=args.hidden_dim,
             rnn_time_step=args.rnn_time_step,
             obs_shape=warpper_obs_tuple_to_list)
 
@@ -425,7 +425,7 @@ class COMAAgentTrainer(AgentTrainer):
     def action(self, obs):
         # 取前 3个 step 的 state + 当前 state
         if self.hidden_state is None:  # 类似初始化
-            self.hidden_state = np.zeros((self.args.num_units,))
+            self.hidden_state = np.zeros((self.args.hidden_dim,))
         self.warpper(obs)  # 组成4个历史片段
         actor_inputs_feature = np.concatenate([self.history_states] + [self.hidden_state])
         [act, act_hidden] = self.act(actor_inputs_feature[None])
@@ -521,7 +521,7 @@ class COMAAgentTrainer(AgentTrainer):
         agent_warpper_obs = self.learn_warpper(agent_obs)
         # burn-in
         # 先用一个轨迹 恢复actor的GRU的隐状态
-        learn_hidden_state = np.zeros((self.args.num_units,))
+        learn_hidden_state = np.zeros((self.args.hidden_dim,))
         obs_warpper_state = []
         for i in range(len(act_n[self.agent_index])):
             warpper_obs = np.concatenate([agent_warpper_obs[i]] + [learn_hidden_state])
@@ -543,7 +543,7 @@ class COMAAgentTrainer(AgentTrainer):
                 if hasattr(agent, "history_states"):  # 检查agent中是否带GRU,若有，就必须timestep个片段进行GRU计算
                     agent_obs_next = obs_next_n[self.agent_index]
                     agent_warpper_obs_next = self.learn_warpper(agent_obs_next)
-                    learn_hidden_target_stat = np.zeros((self.args.num_units,))
+                    learn_hidden_target_stat = np.zeros((self.args.hidden_dim,))
                     target_act_next = []
                     for i in range(len(agent_obs_next)):
                         agent_warpper_next = np.concatenate([agent_warpper_obs_next[i]] + [learn_hidden_target_stat])

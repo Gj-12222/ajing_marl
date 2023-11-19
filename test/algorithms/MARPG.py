@@ -75,7 +75,7 @@ class MARPGTrainer(AgentTrainer):
                 obs_ph_n=obs_ph_n,
                 act_shape_n=act_shape_n,
                 q_optimizer= tf.train.AdamOptimizer(learning_rate= args.lr * 0.1),
-                num_units=args.num_units,
+                num_units=args.hidden_dim,
                 grad_norm_clipping=0.5,
                 local_q_func=local_q_func)
 

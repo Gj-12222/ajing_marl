@@ -40,7 +40,7 @@ class QMIXAgentTrainer(AgentTrainer):
         for i in range(self.n):
             obs_ph_n.append(U.BatchInput(obs_space_n[i], name="observation" + str(i)).get())
         warpper_obs_tuple_to_list = list(obs_space_n[agent_index])[0] * 4
-        warpper_obs_ph = U.BatchInput([warpper_obs_tuple_to_list + args.num_units],
+        warpper_obs_ph = U.BatchInput([warpper_obs_tuple_to_list + args.hidden_dim],
                                       name="warpper_obs_and_last_hidden_state" + str(self.agent_index)).get()
 
         # 2.2 建立mix-Q价值网络及计算图
@@ -53,7 +53,7 @@ class QMIXAgentTrainer(AgentTrainer):
                 optimizer = tf.train.AdamOptimizer(learning_rate=args.lr * 0.05),
                 grad_norm_clipping = 0.5,
                 local_func = local_q_func,
-                num_units = args.num_units)
+                num_units = args.hidden_dim)
         # 2.3 建立策略网络及计算图
         self.act, self.p_train, self.p_target_update, self.p_target_act, self.actor_vars = p_train(
                 scope = self.name,
@@ -67,7 +67,7 @@ class QMIXAgentTrainer(AgentTrainer):
                 optimizer = tf.train.AdamOptimizer(learning_rate=args.lr * 0.1),
                 grad_norm_clipping = 0.5,  # 梯度裁剪
                 local_func = local_q_func,  # 判断使用Signal-agentRL还是Multi-agentRL
-                num_units = args.num_units,
+                num_units = args.hidden_dim,
                 rnn_time_step = args.rnn_time_step,
                 obs_shape = warpper_obs_tuple_to_list)
         # ③记忆库
@@ -83,7 +83,7 @@ class QMIXAgentTrainer(AgentTrainer):
     def action(self, obs):
         # 取前 3个 step 的 state + 当前 state
         if self.hidden_state is None:  # 类似初始化
-            self.hidden_state = np.zeros((self.args.num_units,))
+            self.hidden_state = np.zeros((self.args.hidden_dim,))
         self.warpper(obs)  # 组成4个历史片段
         actor_inputs_feature = np.concatenate([self.history_states] + [self.hidden_state])
         [act, act_hidden] = self.act(actor_inputs_feature[None])

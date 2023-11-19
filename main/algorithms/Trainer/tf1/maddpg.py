@@ -5,34 +5,44 @@ core code for the MADDPG algorithm
 import numpy as np
 import random
 import tensorflow as tf
+import tensorflow.contrib.layers as layers
 import tools.tf_util as U
-
+import os
 from tools.distributions import make_pdtype
 from algorithms import AgentTrainer
-from .replay_buffer import ReplayBuffer
+from tools.replay_buffer import ReplayBuffer
 
+# Actor-critic
+def mlp_model(input, num_outputs, scope, reuse=False, num_units=64, rnn_cell=None, activation_fn=None):
+    with tf.variable_scope(scope, reuse=reuse):
+        out = input
+        out = layers.fully_connected(out, num_outputs=num_units, activation_fn=tf.nn.relu)
+        out = layers.fully_connected(out, num_outputs=num_units, activation_fn=tf.nn.relu)
+        out = layers.fully_connected(out, num_outputs=num_outputs, activation_fn=activation_fn)
+        return out
 
-# 此函数功能：计算累计折扣回报：
+# r = 0
+# G= for i = 1 range n:
+#   r = gamma * r + reward
 def discount_with_dones(rewards, dones, gamma):
     discounted = []
     r = 0
     for reward, done in zip(rewards[::-1], dones[::-1]):
-        r = reward + gamma * r
-        r = r * (1. - done)
+        r = reward + gamma*r
+        r = r*(1.-done)
         discounted.append(r)
     # [::-1] 是
     return discounted[::-1]
 
 
-#  参数更新函数
+#  soft update params
 def make_update_exp(vals, target_vals):
     polyak = 1.0 - 1e-2  # 1.0 - 0.01 = 0.99
     expression = []
     for var, var_target in zip(sorted(vals, key=lambda v: v.name), sorted(target_vals, key=lambda v: v.name)):
-        expression.append(var_target.assign(polyak * var_target + (1.0 - polyak) * var))
+        expression.append(var_target.assign(polyak * var_target + (1.0-polyak) * var))
     expression = tf.group(*expression)
     return U.function([], [], updates=[expression])
-
 
 def p_train(make_obs_ph_n,
             act_space_n,
@@ -43,48 +53,49 @@ def p_train(make_obs_ph_n,
             grad_norm_clipping=None,
             local_q_func=False,
             num_units=64,
-            q_num_units=128,
             scope="trainer",
             reuse=None):
     with tf.variable_scope(scope, reuse=reuse):
         # create distribtuions
         act_pdtype_n = [make_pdtype(act_space) for act_space in act_space_n]
-        # 设置张量
-        obs_ph_n = make_obs_ph_n
-        act_ph_n = [act_pdtype_n[i].sample_placeholder([None], name="action" + str(i)) for i in range(len(act_space_n))]
+        # set up placeholders
+        obs_ph_n = make_obs_ph_n  # placeholder
+        act_ph_n = [act_pdtype_n[i].sample_placeholder([None], name="action"+str(i)) for i in range(len(act_space_n))]
         p_input = obs_ph_n[p_index]
-        p = p_func(p_input, int(act_pdtype_n[p_index].param_shape()[0]), scope="p_func", num_units=num_units,
-                   activation_fn=None)
+        p = p_func(p_input, int(act_pdtype_n[p_index].param_shape()[0]), scope="p_func", num_units=num_units,activation_fn=None)
         p_func_vars = U.scope_vars(U.absolute_scope_name("p_func"))
+
+        # wrap parameters in distribution
         act_pd = act_pdtype_n[p_index].pdfromflat(p)
         act_sample = act_pd.sample()
         act_sample = tf.tanh(act_sample)
         p_reg = tf.reduce_mean(tf.square(act_pd.flatparam()))
 
         act_input_n = act_ph_n + []
-
         act_input_n[p_index] = act_pd.sample()
         q_input = tf.concat(obs_ph_n + act_input_n, 1)
-        if local_q_func:  # = True
+        if local_q_func:
             q_input = tf.concat([obs_ph_n[p_index], act_input_n[p_index]], 1)
-        q = q_func(q_input, 1, scope="q_func", reuse=True, num_units=q_num_units)[:, 0]
+        q = q_func(q_input, 1, scope="q_func", reuse=True, num_units=num_units)[:, 0]
         pg_loss = -tf.reduce_mean(q)
         loss = pg_loss + p_reg * 1e-3
         optimize_expr = U.minimize_and_clip(optimizer, loss, p_func_vars, grad_norm_clipping)
+
         # Create callable functions
+
         train = U.function(inputs=obs_ph_n + act_ph_n, outputs=loss, updates=[optimize_expr])
         act = U.function(inputs=[obs_ph_n[p_index]], outputs=act_sample)
         p_values = U.function([obs_ph_n[p_index]], p)
 
-        # target network
+        # target network-> theta_target
         target_p = p_func(p_input, int(act_pdtype_n[p_index].param_shape()[0]), scope="target_p_func",
-                          num_units=num_units, activation_fn=None)
+                          num_units=num_units,activation_fn=None)
+
         target_p_func_vars = U.scope_vars(U.absolute_scope_name("target_p_func"))
         update_target_p = make_update_exp(p_func_vars, target_p_func_vars)
         target_act_sample = act_pdtype_n[p_index].pdfromflat(target_p).sample()
         target_act = U.function(inputs=[obs_ph_n[p_index]], outputs=target_act_sample)
-
-        return act, train, update_target_p, {'p_values': p_values, 'target_act': target_act}
+        return act, train, update_target_p, {'p_values': p_values, 'target_act': target_act}, 'p_func'
 
 
 def q_train(make_obs_ph_n,
@@ -98,14 +109,15 @@ def q_train(make_obs_ph_n,
             reuse=None,
             num_units=64):
     with tf.variable_scope(scope, reuse=reuse):
+        # create distribtuions
         act_pdtype_n = [make_pdtype(act_space) for act_space in act_space_n]
 
-        # set up placeholders  设置张量placeholder
+        # set up placeholders
         obs_ph_n = make_obs_ph_n
-        act_ph_n = [act_pdtype_n[i].sample_placeholder([None], name="action" + str(i)) for i in range(len(act_space_n))]
+        act_ph_n = [act_pdtype_n[i].sample_placeholder([None], name="action"+str(i)) for i in range(len(act_space_n))]
         target_ph = tf.placeholder(tf.float32, [None], name="target")
+
         q_input = tf.concat(obs_ph_n + act_ph_n, 1)
-        # 若是DDPG
         if local_q_func:
             q_input = tf.concat([obs_ph_n[q_index], act_ph_n[q_index]], 1)
         q = q_func(q_input, 1, scope="q_func", num_units=num_units)[:, 0]
@@ -118,24 +130,23 @@ def q_train(make_obs_ph_n,
         # Create callable functions
         train = U.function(inputs=obs_ph_n + act_ph_n + [target_ph], outputs=loss, updates=[optimize_expr])
         q_values = U.function(obs_ph_n + act_ph_n, q)
+        # target network
         target_q = q_func(q_input, 1, scope="target_q_func", num_units=num_units)[:, 0]
-
         target_q_func_vars = U.scope_vars(U.absolute_scope_name("target_q_func"))
         update_target_q = make_update_exp(q_func_vars, target_q_func_vars)
         target_q_values = U.function(obs_ph_n + act_ph_n, target_q)
-
         return train, update_target_q, {'q_values': q_values, 'target_q_values': target_q_values}
 
 
 class MADDPGAgentTrainer(AgentTrainer):
-    def __init__(self, name, model, obs_shape_n, act_space_n, agent_index, args, local_q_func=False):
+    def __init__(self, name, obs_shape_n, act_space_n, agent_index, args, local_q_func=False):
         self.name = name
         self.n = len(obs_shape_n)
         self.agent_index = agent_index
         self.args = args
         obs_ph_n = []
         for i in range(self.n):
-            obs_ph_n.append(U.BatchInput(obs_shape_n[i], name="observation" + str(i)).get())
+            obs_ph_n.append(U.BatchInput(obs_shape_n[i], name="observation"+str(i)).get())
 
         # Create all the functions necessary to train the model
         self.q_train, self.q_update, self.q_debug = q_train(
@@ -143,45 +154,44 @@ class MADDPGAgentTrainer(AgentTrainer):
             make_obs_ph_n=obs_ph_n,
             act_space_n=act_space_n,
             q_index=agent_index,
-            q_func=model,
-            optimizer=tf.train.AdamOptimizer(learning_rate=args.lr * 0.1),
-            grad_norm_clipping=0.5,  # 梯度修剪
+            q_func=mlp_model,
+            optimizer=tf.train.AdamOptimizer(learning_rate=args.lr*0.1),
+            grad_norm_clipping=0.5,
             local_q_func=local_q_func,
-            num_units=args.hidden_dim * 5
-        )
-
-        self.act, self.p_train, self.p_update, self.p_debug = p_train(
+            num_units=args.hidden_dim)
+        self.act, self.p_train, self.p_update, self.p_debug, self.actor_vars = p_train(
             scope=self.name,
             make_obs_ph_n=obs_ph_n,
             act_space_n=act_space_n,
             p_index=agent_index,
-            p_func=model,
-            q_func=model,
+            p_func=mlp_model,
+            q_func=mlp_model,
             optimizer=tf.train.AdamOptimizer(learning_rate=args.lr),
             grad_norm_clipping=0.5,
             local_q_func=local_q_func,
-            num_units=args.hidden_dim,
-            q_num_units=args.hidden_dim * 5
+            num_units=args.hidden_dim
         )
         # Create experience buffer
-        self.replay_buffer = ReplayBuffer(5e6)  # 10^6=100W
+        self.replay_buffer = ReplayBuffer(5e6)
         self.max_replay_buffer_len = args.batch_size * args.max_episode_len
         self.replay_sample_index = None
+
 
     def action(self, obs):
         return self.act(obs[None])[0]
 
-    # 将经验（S,A,R,S'）存入经验记忆库replay_buffer
     def experience(self, obs, act, rew, new_obs, done, terminal):
         self.replay_buffer.add(obs, act, rew, new_obs, float(done))
 
     def preupdate(self):
         self.replay_sample_index = None
 
-    def update(self, agents, t):
 
-        if len(self.replay_buffer) < self.max_replay_buffer_len: return
-        if not t % 100 == 0: return
+    def update(self, agents, t):
+        if len(self.replay_buffer) < self.max_replay_buffer_len:  # replay buffer is not large enough
+            return
+        if not t % 100 == 0:
+            return
 
         self.replay_sample_index = self.replay_buffer.make_index(self.args.batch_size)
         # collect replay sample from all agents
@@ -189,17 +199,18 @@ class MADDPGAgentTrainer(AgentTrainer):
         obs_next_n = []
         act_n = []
         index = self.replay_sample_index
+        # buffer_data:
         for i in range(self.n):
             obs, act, rew, obs_next, done = agents[i].replay_buffer.sample_index(index)
             obs_n.append(obs)
             obs_next_n.append(obs_next)
             act_n.append(act)
+        # self.agent.buffer_data
         obs, act, rew, obs_next, done = self.replay_buffer.sample_index(index)
-
         # train q network
         num_sample = 1
         target_q = 0.0
-        for i in range(num_sample):
+        for i in range(num_sample):  # 采集样本训练
             target_act_next_n = [agents[i].p_debug['target_act'](obs_next_n[i]) for i in range(self.n)]
             target_q_next = self.q_debug['target_q_values'](*(obs_next_n + target_act_next_n))
             # Q = R + gamma * (1 - done——终止条件) * Q
@@ -215,7 +226,6 @@ class MADDPGAgentTrainer(AgentTrainer):
     # 获取神经网络的变量
     def get_scope_var(self, scope):
         return U.scope_vars(U.absolute_scope_name(scope))
-
     # 保存模型
     def save_model(self, file_name, saver=None):
         os.makedirs(os.path.dirname(file_name + self.name), exist_ok=True)
@@ -247,6 +257,7 @@ class MADDPGAgentTrainer(AgentTrainer):
         if saver is None:
             saver = tf.train.Saver()
         saver.restore(U.get_session(), file_name + self.name + '/actor/')
+
 
 
 

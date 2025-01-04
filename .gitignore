@@ -153,3 +153,5 @@ cython_debug/
 .idea/deployment.xml
 *.xml
 *.iml
+
+/test/

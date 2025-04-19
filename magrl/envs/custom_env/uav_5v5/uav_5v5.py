@@ -1,13 +1,15 @@
-
 import numpy as np
 
-from envs.custom_env.baseEnv import BaseWorld
+from envs.custom_env.uav_5v5.baseEnv import BaseWorld, Agent, Landmark
 from envs.mpe_env.multiagent.scenario import BaseScenario
 import math
 import copy
 
 from tools.multi_discrete import MultiDiscrete
 from train.config import TrainConfig
+from envs.custom_env.uav_5v5.env_config import EnvConfig
+
+ECG = EnvConfig()
 
 
 class Scenario(BaseScenario):
@@ -46,11 +48,11 @@ class Scenario(BaseScenario):
             agent.max_roll = 23.0
             agent.max_course = 180.0
 
-            agent.chi = np.random.random([1,2])*0.5
+            agent.chi = np.random.random([1, 2]) * 0.5
             if agent.adversary:
-                agent.lock_num=[0 for _ in range(num_blue_agents)]
+                agent.lock_num = [0 for _ in range(num_blue_agents)]
             else:
-                agent.lock_num=[0 for _ in range(num_red_agents)]
+                agent.lock_num = [0 for _ in range(num_red_agents)]
         # add landmarks
         world.landmarks = [Landmark() for _ in range(num_landmarks)]
         for i, landmark in enumerate(world.landmarks):
@@ -61,6 +63,7 @@ class Scenario(BaseScenario):
             landmark.boundary = False
         # make initial conditions
         self.reset_world(world)
+        self.world = world
         return world
 
     def reset_world(self, world):
@@ -82,9 +85,9 @@ class Scenario(BaseScenario):
             agent.state.f = np.array([15])
 
             if agent.adversary:
-                    agent.lock_num = [0 for _ in range(self.num_blue)]
+                agent.lock_num = [0 for _ in range(self.num_blue)]
             else:
-                    agent.lock_num = [0 for _ in range(self.num_red)]
+                agent.lock_num = [0 for _ in range(self.num_red)]
 
         for i, landmark in enumerate(world.landmarks):
             if not landmark.boundary:
@@ -97,33 +100,28 @@ class Scenario(BaseScenario):
             collisions = 0
             for a in self.good_agents(world):
 
-                if self.attack_uav(a, agent) and a.death == False:
+                if self.attack_uav(a, agent) and not a.death:
                     collisions += 1
 
             return collisions
         else:
             return 0
 
-
     # compute the number of locking number of the agent
     def entity_lock_num(self, agent, world):
-        opponent = []
         if agent.adversary:
             opponent = self.good_agents(world)
         else:
             opponent = self.adversaries(world)
 
         for i, opp in enumerate(opponent):
-            if self.attack_uav(opp,agent):
+            if self.attack_uav(opp, agent):
                 agent.lock_num[i] += 1
             else:
                 agent.lock_num[i] += 0
 
-
     # compute who attacked from agent in opponent team agents.
     def attack_compute_num(self, agent, world):
-        opponent = []
-
         if agent.adversary:
             opponent = self.good_agents(world)
         else:
@@ -146,7 +144,7 @@ class Scenario(BaseScenario):
         else:
             opponent = self.adversaries(world)
         for i, opp in enumerate(opponent):
-            if self.attack_uav(opp,agent):
+            if self.attack_uav(opp, agent):
                 lock.append(1)
             else:
                 lock.append(0)
@@ -162,42 +160,43 @@ class Scenario(BaseScenario):
         distance = np.sqrt(np.sum(np.square(delta_pos)))
         if distance <= 1e-5:
             return False
-        
-        agent1_chi = [agent1.state.p_vel[0],agent1.state.p_vel[1]]
 
-        if abs(agent1.state.p_vel[0]) < 1e-5 and abs(agent1.state.p_vel[1])<1e-5:
+        agent1_chi = [agent1.state.p_vel[0], agent1.state.p_vel[1]]
+
+        if abs(agent1.state.p_vel[0]) < 1e-5 and abs(agent1.state.p_vel[1]) < 1e-5:
             agent1_chi[0] = 0.1
             agent1_chi[1] = 0
-        agent2_chi = [agent2.state.p_vel[0],agent2.state.p_vel[1]]
+        agent2_chi = [agent2.state.p_vel[0], agent2.state.p_vel[1]]
 
-        if abs(agent2.state.p_vel[0]) < 1e-5 and abs(agent2.state.p_vel[1])<1e-5:
+        if abs(agent2.state.p_vel[0]) < 1e-5 and abs(agent2.state.p_vel[1]) < 1e-5:
             agent2_chi[0] = 0.1
             agent2_chi[1] = 0
 
         agent1_chi_value = np.sqrt(np.sum(np.square(agent1_chi)))
-        agent1_cross = (delta_pos[0]*agent1_chi[0]+delta_pos[1]*agent1_chi[1])/(distance*agent1_chi_value)
+        agent1_cross = (delta_pos[0] * agent1_chi[0] + delta_pos[1] * agent1_chi[1]) / (distance * agent1_chi_value)
 
         if agent1_cross < -1:
-           agent1_cross  = -1
+            agent1_cross = -1
         if agent1_cross > 1:
-           agent1_cross = 1
+            agent1_cross = 1
 
         agent1_angle = math.acos(agent1_cross)
         agent2_chi_value = np.sqrt(np.sum(np.square(agent2_chi)))
-        agent2_cross = (-delta_pos[0]*agent2_chi[0]-delta_pos[1]*agent2_chi[1])/(distance*agent2_chi_value)
+        agent2_cross = (-delta_pos[0] * agent2_chi[0] - delta_pos[1] * agent2_chi[1]) / (distance * agent2_chi_value)
         if agent2_cross < -1:
-           agent2_cross  = -1
+            agent2_cross = -1
         if agent2_cross > 1:
-           agent2_cross = 1
+            agent2_cross = 1
         agent2_angle = math.acos(agent2_cross)
 
-        revised_defense = 180-self.cfg.defense_angle/2
+        revised_defense = 180 - ECG.defense_angle / 2
 
-        if distance < self.cfg.fire_range and agent2_angle*180/math.pi>revised_defense and agent1_angle*180/math.pi<self.cfg.attack_angle/2:
+        if distance < ECG.fire_range and agent2_angle * 180 / math.pi > revised_defense and \
+                agent1_angle * 180 / math.pi < ECG.attack_angle / 2:
             return True
 
         return False
-    
+
     # True if agent1 win, False for others
 
     def jam_uav(self, agent1, agent2):
@@ -209,7 +208,7 @@ class Scenario(BaseScenario):
         distance = np.sqrt(np.sum(np.square(delta_pos)))
         if distance <= 1e-5:
             return False
-        if distance < self.cfg.jam_range:
+        if distance < ECG.jam_range:
             return True
 
         return False
@@ -222,12 +221,10 @@ class Scenario(BaseScenario):
     def adversaries(self, world):
         return [agent for agent in world.agents if agent.adversary]
 
-
     def reward(self, agent, world):
         # Agents are rewarded based on minimum agent distance to each landmark
         main_reward = self.red_reward(agent, world) if agent.adversary else self.blue_reward(agent, world)
         return main_reward
-
 
     def blue_reward(self, agent, world):
         rew = 0  # 即时奖励
@@ -258,9 +255,9 @@ class Scenario(BaseScenario):
         # jam reward
         if agent.action.f > 0:
             agent_jam = []
-            if agent.collide and agent.death == False:
+            if agent.collide and not agent.death:
                 for i, a in enumerate(adversaries):
-                    if self.jam_uav(agent,a) and agent.state.f[0] > 0:
+                    if self.jam_uav(agent, a) and agent.state.f[0] > 0:
                         agent_jam.append(1)
                     else:
                         agent_jam.append(0)
@@ -278,16 +275,16 @@ class Scenario(BaseScenario):
                 rew -= 8 * sum(agent_lock)
                 return rew
 
-        # jamed reward
-        agent_jamed = []
-        if agent.collide and agent.death == False:
+        # jammed reward
+        agent_jammed = []
+        if agent.collide and not agent.death:
             for i, a in enumerate(adversaries):
                 if self.jam_uav(a, agent) and a.action.f > 0 and a.state.f > 0:
-                    agent_jamed.append(1)
+                    agent_jammed.append(1)
                 else:
-                    agent_jamed.append(0)
+                    agent_jammed.append(0)
 
-            rew -= 0.2 * sum(agent_jamed)
+            rew -= 0.2 * sum(agent_jammed)
 
         # bound reward
         def bound(x):
@@ -301,9 +298,7 @@ class Scenario(BaseScenario):
             x = abs(agent.state.p_pos[p])
             rew -= bound(x)
 
-
         return rew
-
 
     def red_reward(self, agent, world):
         rew = 0
@@ -317,26 +312,26 @@ class Scenario(BaseScenario):
         if shape:
             dis = []
             for a in agents:
-                if a.death == False:
+                if not a.death:
                     dis.append(np.sqrt(np.sum(np.square(a.state.p_pos - agent.state.p_pos))))
             if len(dis) > 0:
                 rew -= 0.1 * min(dis)
-        
+
         # attack reward
         red_attack = []
         agent_attack = []
         rew_attack = 0
         self.entity_lock_num(agent, world)
 
-        if agent.collide and agent.death == False:
-            for _,adv in enumerate(adversaries):
+        if agent.collide and not agent.death:
+            for _, adv in enumerate(adversaries):
 
-                if adv.death ==False:
+                if not adv.death:
                     if adv is agent:
-                        agent_attack = self.attack_compute_num(adv,world)
+                        agent_attack = self.attack_compute_num(adv, world)
 
                     else:
-                        red_attack += self.attack_compute_num(adv,world)
+                        red_attack += self.attack_compute_num(adv, world)
                 else:
                     red_attack += [0 for _ in range(len(agent.lock_num))]
             for i, red in enumerate(agents):
@@ -347,24 +342,23 @@ class Scenario(BaseScenario):
             rew += 20 * rew_attack
 
         # attacked reward
-        red_agent_lock = self.lock_compute_num(agent,world)  #
+        red_agent_lock = self.lock_compute_num(agent, world)  #
         if agent.collide:
 
             if sum(red_agent_lock) >= 1:
-                for i,ags in enumerate(agents):
-                    if ags.death == True:
+                for i, ags in enumerate(agents):
+                    if not ags.death:
                         red_agent_lock[i] = 0
 
                 if sum(red_agent_lock) >= 1:
                     agent.death = True
-                    rew -=  5 * sum(red_agent_lock)
+                    rew -= 5 * sum(red_agent_lock)
                     return rew
-
 
         # jam reward
         if agent.action.f > 0:
             agent_jam = []
-            if agent.collide and agent.death == False:
+            if agent.collide and not agent.death:
                 for i, ag in enumerate(agents):
                     if self.jam_uav(agent, ag) and agent.state.f[0] > 0:
 
@@ -374,16 +368,16 @@ class Scenario(BaseScenario):
 
                 rew += sum(agent_jam) * 0.5
 
-        # jamed reward
-        agent_jamed = []
-        if agent.collide and agent.death == False:
+        # jammed reward
+        agent_jammed = []
+        if agent.collide and not agent.death:
             for i, ag in enumerate(agents):
                 if self.jam_uav(ag, agent) and ag.action.f > 0 and ag.state.f[0] > 0:
 
-                    agent_jamed.append(1)
+                    agent_jammed.append(1)
                 else:
-                    agent_jamed.append(0)
-            rew -= sum(agent_jamed) * 0.2
+                    agent_jammed.append(0)
+            rew -= sum(agent_jammed) * 0.2
         # bound reward
         for adv in adversaries:
             if not adv.death:
@@ -416,13 +410,13 @@ class Scenario(BaseScenario):
         other_jam = []
 
         my_chi = np.zeros(1)
-        if abs(agent.state.p_vel[0])<1e-5 and abs(agent.state.p_vel[1])<1e-5:
+        if abs(agent.state.p_vel[0]) < 1e-5 and abs(agent.state.p_vel[1]) < 1e-5:
             my_chi[0] = 0
         else:
-            my_chi[0] = math.atan2(agent.state.p_vel[1],agent.state.p_vel[0])
+            my_chi[0] = math.atan2(agent.state.p_vel[1], agent.state.p_vel[0])
         our_chi.append(my_chi)
 
-        temp_agents=[]
+        temp_agents = []
         for agent_i in world.agents:
             if agent_i.adversary == agent.adversary:
                 temp_agents.append(agent_i)
@@ -431,7 +425,7 @@ class Scenario(BaseScenario):
                 temp_agents.append(agent_i)
 
         for other in temp_agents:
-            if other is agent: continue            
+            if other is agent: continue
 
             if other.death:
                 comm.append(np.zeros(world.dim_c))
@@ -448,15 +442,15 @@ class Scenario(BaseScenario):
                 other_vel.append(other.state.p_vel)
 
                 tmp_chi = np.zeros(1)  #
-                if abs(other.state.p_vel[0])<1e-5 and abs(other.state.p_vel[1])<1e-5:
+                if abs(other.state.p_vel[0]) < 1e-5 and abs(other.state.p_vel[1]) < 1e-5:
                     tmp_chi[0] = 0
                 else:
-                    tmp_chi[0] = math.atan2(other.state.p_vel[1],other.state.p_vel[0])
+                    tmp_chi[0] = math.atan2(other.state.p_vel[1], other.state.p_vel[0])
                 other_chi.append(tmp_chi)  #
                 other_roll.append(other.state.p_roll)
                 other_jam.append(other.state.f)
 
-        action_number=[np.zeros(3)]  # 3 acc, roll_a, jam
+        action_number = [np.zeros(3)]  # 3 acc, roll_a, jam
 
         # pv = len(agent.state.p_vel)  # 2      2  自身位置
         # pp = len(agent.state.p_pos)  # 2      2  自身速度
@@ -472,7 +466,6 @@ class Scenario(BaseScenario):
         # ohjam = len(other_jam)       # n-1       其他agent干扰次数
         # an = len(action_number)      # 5      5  动作数量=5
 
-
         all_shape = np.concatenate([agent.state.p_vel] +
                                    [agent.state.p_pos] +
                                    [agent.state.f] +
@@ -485,42 +478,59 @@ class Scenario(BaseScenario):
 
         return all_shape
 
-    ##added by liyuan: if all green nodes die, this epsoid is over.
-
-    def done(self, agent, world):
+    # added by GuoJing: if all green nodes die, this episode is over.
+    def done(self, agent):
         allDie = False
         if agent.death:
             allDie = True
         return allDie
 
+    def terminal(self, agent, world):
+        agent_index = self.world.agents.index(agent)
+        allDies = []
+        if agent_index < self.num_red:
+            for _agent in self.adversaries(world):
+                allDie = False
+                if agent.death:
+                    allDie = True
+                allDies.append(allDie)
+        else:
+            for _agent in self.good_agents(world):
+                allDie = False
+                if agent.death:
+                    allDie = True
+                allDies.append(allDie)
+
+        return all(allDies)
+
 
     def render(self, rendering, viewers, render_geoms, render_geoms_xform):
-        for entity in self.entities:
+        for entity in self.world.entities:
             xform = rendering.Transform()  # init transform xform=[平移=0，旋转=0，尺度变换=1]
             # uav
             geom = rendering.make_uav(entity.size)
             # small forward_sector
-            geom_attact_sector = rendering.make_forward_sector(radius=fire_range,
-                                                               angle_start=-attack_angle / 2,
-                                                               angle_end=attack_angle / 2)  # 不需要等分360度，仅需等分attack_angle度
+            geom_attack_sector = rendering.make_forward_sector(radius=ECG.fire_range,
+                                                               angle_start=- ECG.attack_angle / 2,
+                                                               angle_end=ECG.attack_angle / 2)  # 不需要等分360度，仅需等分attack_angle度
             # forward_sector
-            geom_defence_sector = rendering.make_forward_sector(radius=fire_range,
-                                                                angle_start=180 - defense_angle / 2,
-                                                                angle_end=180 + defense_angle / 2)  # 不需要等分360度，仅需等分attack_angle度
+            geom_defence_sector = rendering.make_forward_sector(radius=ECG.fire_range,
+                                                                angle_start=180 - ECG.defense_angle / 2,
+                                                                angle_end=180 + ECG.defense_angle / 2)  # 不需要等分360度，仅需等分attack_angle度
             # jam circle
-            geom_explore = rendering.make_circle(jam_range)
+            geom_explore = rendering.make_circle(ECG.jam_range)
 
             geom.set_color(*entity.color, alpha=0.5)
-            geom_attact_sector.set_color(*entity.color, alpha=0.3)
+            geom_attack_sector.set_color(*entity.color, alpha=0.3)
             geom_defence_sector.set_color(*entity.color, alpha=0.05)
 
             geom_explore.set_color(*entity.color, alpha=0.01)
             geom.add_attr(xform)
-            geom_attact_sector.add_attr(xform)
+            geom_attack_sector.add_attr(xform)
             geom_defence_sector.add_attr(xform)
             geom_explore.add_attr(xform)
             render_geoms.append(geom)
-            render_geoms.append(geom_attact_sector)
+            render_geoms.append(geom_attack_sector)
             render_geoms.append(geom_defence_sector)
             render_geoms.append(geom_explore)
             render_geoms_xform.append(xform)
@@ -534,16 +544,16 @@ class Scenario(BaseScenario):
     def update_render(self, viewers, shared_viewer, render_geoms, render_geoms_xform, mode):
         results = []
         for i in range(len(viewers)):
-            # update bouds to center around agent
+            # update bounds to center around agent
             cam_range = 2
             if shared_viewer:
-                pos = np.zeros(self.dim_p)
+                pos = np.zeros(self.world.dim_p)
             else:
-                pos = self.agents[i].state.p_pos
+                pos = self.world.agents[i].state.p_pos
 
             viewers[i].set_bounds(pos[0] - cam_range, pos[0] + cam_range, pos[1] - cam_range, pos[1] + cam_range)
             # update geometry positions
-            for e, entity in enumerate(self.entities):
+            for e, entity in enumerate(self.world.entities):
                 if 'uav' in entity.name:
                     my_chi = 0
                     if not entity.death:
@@ -563,8 +573,8 @@ class Scenario(BaseScenario):
             return results
 
     def _set_action(self, action, agent, action_space, time=None):
-        agent.action.u = np.zeros(self.dim_p)
-        agent.action.c = np.zeros(self.dim_c)
+        agent.action.u = np.zeros(self.world.dim_p)
+        agent.action.c = np.zeros(self.world.dim_c)
         agent.action.f = np.zeros(1)
         agent.action.r = np.zeros(1)
 
@@ -659,4 +669,3 @@ class Scenario(BaseScenario):
                 action = action[1:]
         # make sure we used all elements of action
         assert len(action) == 0
-

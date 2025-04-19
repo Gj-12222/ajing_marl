@@ -1,6 +1,8 @@
 """
 COMA算法实现
 """
+import os
+
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
 import tensorflow.contrib.rnn as rnn
@@ -10,8 +12,8 @@ import random
 import tools.tf_util as U
 import copy
 
-from tools.distributions import make_pdtype
-from algorithms import AgentTrainer
+from magrl.utils.tf_distributions import make_pdtype
+from magrl.algorithms.trainer import AgentTrainer
 
 """
 RT = rT + γVT
@@ -22,8 +24,11 @@ for t = T-1, T-2,...,0:
 根据TD(λ)的计算公式编写的标准TD(λ)函数
 待测试ing
 """
+
+
 def normal_td_lamda(rewards, dones, gamma, lamda, target_q_next):
     pass
+
 
 def td_lambda_discount_reward(rewards, dones, gamma, lamda_seq, gamma_seq, target_q_next):
     # reward.shape(0) = [t_size,1]
@@ -43,6 +48,7 @@ def td_lambda_discount_reward(rewards, dones, gamma, lamda_seq, gamma_seq, targe
     """[::-1] 表示正序所有行，倒序所有列"""
     return np.array(discount_reward[::-1])
 
+
 # MC-return
 def monte_carlo_returns(rewards, gamma, lamda):
     max_epsiode_len = rewards.shape[0]
@@ -54,6 +60,7 @@ def monte_carlo_returns(rewards, gamma, lamda):
         monte_carlo_temp *= lamda ** (max_epsiode_len - t - 1)  # 再乘以 λ^(T-t-1) * ( ∑i=1~T-t γ^(i-1) * rt+i )
         G_t.append(monte_carlo_temp)
     return G_t
+
 
 # 软更新
 def soft_update_exp(values, target_values):
@@ -83,6 +90,7 @@ def coma_actor_rnn(inputs, num_outputs, scope, num_units=256, reuse=False, rnn_c
         out = layers.fully_connected(last_out, num_outputs=num_outputs, activation_fn=activation_fn)
         # 输出是 out为动作, h_out是隐藏状态输出
         return out, h_state
+
 
 # Critic
 def coma_critic_mlp(inputs, num_outputs, scope, num_units=128, reuse=False, rnn_cell=None, activation_fn=None):
@@ -137,6 +145,7 @@ def q_train(scope,
         # ⑦返回
         return train, update_target_q_net, {'q_values': q_values, 'target_q_values': target_q_values}
 
+
 # Critic网络的输出和更新过程：
 def counterfactual_train(scope,
                          obs_ph_n,
@@ -182,7 +191,8 @@ def counterfactual_train(scope,
         target_counterfactual_values = U.function(inputs=obs_ph_n + act_other_ph_n + agent_onehot_ph,
                                                   outputs=target_counterfactual)
         # ⑦返回
-        return train, update_target_counterfactual_net, {'counterfactual_values': counterfactual_values, 'target_counterfactual_values': target_counterfactual_values}
+        return train, update_target_counterfactual_net, {'counterfactual_values': counterfactual_values,
+                                                         'target_counterfactual_values': target_counterfactual_values}
 
 
 # Actor网络的输出和更新计算过程：
@@ -270,9 +280,11 @@ def p_train(scope,
         p_prob = U.function(inputs=[warpper_obs_ph], outputs=p)
         target_p_prob = U.function(inputs=[warpper_obs_ph], outputs=target_p)
         target_act = U.function(inputs=[warpper_obs_ph], outputs=[target_act_sample, target_hidden_p])
-        train = U.function(inputs=obs_ph_n + act_ph_n + act_ph_other + agent_onehot_ph + [warpper_obs_ph], outputs=loss,updates=[optimizer_p_vars])
+        train = U.function(inputs=obs_ph_n + act_ph_n + act_ph_other + agent_onehot_ph + [warpper_obs_ph], outputs=loss,
+                           updates=[optimizer_p_vars])
 
-        return act, train, target_p_soft_update, {'p_prob': p_prob, 'target_p_prob': target_p_prob, 'target_act': target_act}, "p_func"
+        return act, train, target_p_soft_update, {'p_prob': p_prob, 'target_p_prob': target_p_prob,
+                                                  'target_act': target_act}, "p_func"
 
 
 # COMA算法核心类
@@ -383,7 +395,8 @@ class COMAAgentTrainer(AgentTrainer):
         if not t % self.args.max_episode_len == 0:  return
 
         obs_n, act_n, obs_next_n = [], [], []
-        self.replay_sample_index = self.on_policy_replay_buffer.on_policy_make_indexs_sample(self.args.max_episode_len)  # 在线采样
+        self.replay_sample_index = self.on_policy_replay_buffer.on_policy_make_indexs_sample(
+            self.args.max_episode_len)  # 在线采样
         indexs = self.replay_sample_index
 
         for i in range(self.n):
@@ -434,11 +447,13 @@ class COMAAgentTrainer(AgentTrainer):
                     target_act_next_n.append(target_act_next)
                 else:  # 没有GRU
                     target_act_next_n.append(agent.p_target_act['target_act'](obs_next_n[i]))
-            target_q_next = (1.0 - mask) * self.q_target_values['target_q_values'](*(obs_next_n + target_act_next_n + agent_onehot_n))
-            gamma_seq = np.logspace(1, rew.shape[0], num=rew.shape[0], endpoint=True,base=self.args.gamma)
-            tdlamda_seq = np.logspace(0, rew.shape[0] - 1, num=rew.shape[0], endpoint=True,base=self.args.tdlambda)
+            target_q_next = (1.0 - mask) * self.q_target_values['target_q_values'](
+                *(obs_next_n + target_act_next_n + agent_onehot_n))
+            gamma_seq = np.logspace(1, rew.shape[0], num=rew.shape[0], endpoint=True, base=self.args.gamma)
+            tdlamda_seq = np.logspace(0, rew.shape[0] - 1, num=rew.shape[0], endpoint=True, base=self.args.tdlambda)
             G_t_n = (1 - self.args.tdlambda) * \
-                    td_lambda_discount_reward(rew, mask, gamma=self.args.gamma, lamda_seq=tdlamda_seq, gamma_seq=gamma_seq, target_q_next=target_q_next)
+                    td_lambda_discount_reward(rew, mask, gamma=self.args.gamma, lamda_seq=tdlamda_seq,
+                                              gamma_seq=gamma_seq, target_q_next=target_q_next)
             G_t_n += monte_carlo_returns(rew, self.args.gamma, self.args.tdlambda)
             G_t_lamda += G_t_n
         G_t_lamda = G_t_lamda / num_sample
@@ -468,7 +483,7 @@ class COMAAgentTrainer(AgentTrainer):
         # if step % 40 == 0:  # 目标网络更新间隔40
         self.p_target_update()
 
-        return [q_loss, p_loss, c_loss, np.mean(G_t), np.mean(rew), np.mean(target_q_next), np.std(G_t)]
+        return [q_loss, p_loss, c_loss, np.mean(G_t_lamda), np.mean(rew), np.mean(target_q_next), np.std(G_t_lamda)]
 
     # 获取神经网络的变量
     def get_scope_var(self, scope):
@@ -508,7 +523,9 @@ class COMAAgentTrainer(AgentTrainer):
 
 
 """ ReplayBuffer"""
-class  ReplayBuffer(object):
+
+
+class ReplayBuffer:
 
     def __init__(self, size):
         self._storage = []
@@ -603,11 +620,13 @@ class  ReplayBuffer(object):
     def make_sample_index(self, batch_size):
         index_sample = [np.random.randint(0, len(self._storage) - 1) for _ in range(batch_size)]
         return index_sample
+
     # 打乱逆序采样
     def make_last_jam_index(self, batch_size):
         indexs = [(self._next_index - i - 1) % self._maxsize for i in range(batch_size)]
         np.random.shuffle(indexs)
         return indexs
+
     # 倒序取值
     def collect(self):
         return self.sample(-1)
@@ -626,4 +645,3 @@ class  ReplayBuffer(object):
             obs_next.append(np.array(obs_t1, copy=False))
             done_mask.append(done_mask_t)
         return np.array(obs), np.array(act), np.array(rew), np.array(obs_next), np.array(done_mask)
-

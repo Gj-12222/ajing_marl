@@ -6,11 +6,6 @@ base env
 import math
 import numpy as np
 
-attack_angle = 60  # attack angle
-defense_angle = 90 # defense angle
-fire_range = 0.3  # fire range
-jam_range = 0.6  # jam range
-
 # physical/external base state of all entites
 class EntityState(object):
     def __init__(self):

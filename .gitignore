@@ -154,3 +154,4 @@ cython_debug/
 *.xml
 *.iml
 
+magrl/algorithms/tf1

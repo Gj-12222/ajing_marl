@@ -11,7 +11,7 @@ import torch.nn.functional as F
 import random
 import numpy as np
 
-from algorithms.Trainer import AgentTrainer
+from algorithms import AgentTrainer
 from algorithms.Network.net import MLPCritic
 from algorithms.rl_utils.ReplayBuffer import ReplayBufferTransition, SampleIndexs
 from algorithms.rl_utils.batch import Batch

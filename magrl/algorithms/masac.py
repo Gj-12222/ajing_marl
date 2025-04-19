@@ -20,25 +20,26 @@ from algorithms.rl_utils.batch import Batch
 
 class MASACAgentTrainer(AgentTrainer):
     name = 'masac'
-    def __init__(self, config, algo_config, agent_index, agents):
+    def __init__(self, config, algo_config, agent_index, env):
         super().__init__()
         self.cfg = config
         self.algo_cfg = algo_config
         self.agent_index = agent_index
-        self.n = config['agent_config']['agent_num']
-        self.device = config['device']
+        self.n = config.total_num_agent
+        self.device = config.device
         self.hidden_dim = self.algo_cfg['hidden_dim']
-        self.activate_fn = self.algo_cfg['activate_fn']
+
         self.actor_lr =self.algo_cfg['actor_lr']
         self.critic_lr = self.algo_cfg['critic_lr']
         self.alpha_lr = self.algo_cfg['alpha_lr']
-        self.obs_dim = agents[agent_index].obs_dim
-        self.action_dim = agents[agent_index].action_dim
 
-        self.PolicyActor = SoftDiscreteActor(self.obs_dim, self.hidden_dim, sum(self.action_dim),  device=self.device)
+        self.obs_dim = env.observation_space[agent_index].shape[0]
+        self.action_dim = env.action_space[agent_index].shape[0]
+
+        self.PolicyActor = SoftDiscreteActor(self.obs_dim, self.hidden_dim, self.action_dim,  distribution_fn=self.algo_cfg['distribution_fn'], device=self.device)
         self.PolicyActor_optimizer = torch.optim.Adam(self.PolicyActor.parameters(), lr=self.actor_lr)
 
-        self.q_input_dim = sum([agent.obs_dim + sum(agent.action_dim) for agent in agents])
+        self.q_input_dim = sum([obs_shape.shape[0] + action_shape.shape[0] for obs_shape, action_shape in zip(env.observation_space, env.action_space)])
         self.Q1NetCritic = MLPCritic(self.q_input_dim, self.hidden_dim, 1, device=self.device)
         self.targetQ1NetCritic = MLPCritic(self.q_input_dim, self.hidden_dim, 1, device=self.device)
         self.Q1NetCritic_optimizer = torch.optim.Adam(self.Q1NetCritic.parameters(), lr=self.critic_lr)
@@ -47,7 +48,7 @@ class MASACAgentTrainer(AgentTrainer):
         self.Q2NetCritic_optimizer = torch.optim.Adam(self.Q2NetCritic.parameters(), lr=self.critic_lr)
 
         # trainable parameter
-        self.log_alpha = torch.tensor((-np.log(sum(self.action_dim)),),
+        self.log_alpha = torch.tensor((-np.log(self.action_dim),),
                                       dtype=torch.float32,
                                       requires_grad=True,
                                       device=self.device)
@@ -60,9 +61,10 @@ class MASACAgentTrainer(AgentTrainer):
     def action(self, obs_n):
         obs = obs_n[self.agent_index]
         if not isinstance(obs, torch.Tensor):
-            obs = torch.tensor(obs[None], device=self.device)
+            obs = torch.tensor(obs[None], dtype=torch.float32, device=self.device)
         action_dist = self.PolicyActor(obs)
         action = action_dist.sample().squeeze(dim=0)
+
         return action
 
     def preUpdate(self):

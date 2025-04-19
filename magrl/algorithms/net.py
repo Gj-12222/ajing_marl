@@ -8,8 +8,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import algorithms.rl_utils.distributions as D
 from torch.distributions.categorical import Categorical
+import rl_utils.torch_distributions as D
+
 
 class MLPCritic(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, activate_function='None', device='cpu', noise_layer=False):
@@ -22,9 +23,12 @@ class MLPCritic(nn.Module):
         if noise_layer:
             self.noise_layer = NoiseNet()
 
-        if activate_function == 'tanh': self.activate_function = torch.nn.Tanh()
-        elif activate_function == 'softmax': self.activate_function = torch.nn.Softmax()
-        elif activate_function == 'None': self.activate_function = None
+        if activate_function == 'tanh':
+            self.activate_function = torch.nn.Tanh()
+        elif activate_function == 'softmax':
+            self.activate_function = torch.nn.Softmax()
+        elif activate_function == 'None':
+            self.activate_function = None
 
     def forward(self, inputs):
         outputs = torch.relu(self.fc1(inputs))
@@ -78,6 +82,7 @@ class RNNMLPCritic(nn.Module):
 
         return value, last_hidden_state
 
+
 class Actor(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, activate_function='None', device='cpu'):
         super().__init__()
@@ -86,9 +91,12 @@ class Actor(nn.Module):
         self.fc2 = nn.Linear(hidden_dim, hidden_dim, device=device)
         self.fc3 = nn.Linear(hidden_dim, output_dim, device=device)
 
-        if activate_function == 'tanh': self.activate_function = torch.nn.Tanh()
-        elif activate_function == 'softmax': self.activate_function = torch.nn.Softmax()
-        elif activate_function == 'None': self.activate_function = None
+        if activate_function == 'tanh':
+            self.activate_function = torch.nn.Tanh()
+        elif activate_function == 'softmax':
+            self.activate_function = torch.nn.Softmax()
+        elif activate_function == 'None':
+            self.activate_function = None
 
     def forward(self, inputs):
         outputs = torch.relu(self.fc1(inputs))
@@ -140,7 +148,7 @@ class DiscreteRNNActor(nn.Module):
                 mask = torch.from_numpy(mask).to(self.device)
 
         if self.cfg['use_featureNorm']:
-                inputs = self.featureNorm(inputs)
+            inputs = self.featureNorm(inputs)
         outputs = self.mlp(inputs)
         if self.cfg['use_rnn_policy']:
             outputs, last_hidden_state = self.RNN(outputs, last_hidden_state, mask)
@@ -148,6 +156,7 @@ class DiscreteRNNActor(nn.Module):
         dist = self.actor_layer(outputs)
 
         return dist, last_hidden_state
+
 
 class DiscreteActor(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, activate_function='None', device='cpu'):
@@ -157,9 +166,12 @@ class DiscreteActor(nn.Module):
         self.fc2 = nn.Linear(hidden_dim, hidden_dim, device=device)
         self.fc3 = nn.Linear(hidden_dim, output_dim, device=device)
 
-        if activate_function == 'tanh': self.activate_function = torch.nn.Tanh()
-        elif activate_function == 'softmax': self.activate_function = torch.nn.Softmax()
-        elif activate_function == 'None': self.activate_function = None
+        if activate_function == 'tanh':
+            self.activate_function = torch.nn.Tanh()
+        elif activate_function == 'softmax':
+            self.activate_function = torch.nn.Softmax()
+        elif activate_function == 'None':
+            self.activate_function = None
 
     def forward(self, inputs):
         outputs = torch.relu(self.fc1(inputs))
@@ -172,6 +184,7 @@ class DiscreteActor(nn.Module):
 
         return dist
 
+
 class SoftDiscreteActor(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, distribution_fn='None', device='cpu'):
         super().__init__()
@@ -180,9 +193,12 @@ class SoftDiscreteActor(nn.Module):
         self.fc2 = nn.Linear(hidden_dim, hidden_dim, device=device)
         self.fc3 = nn.Linear(hidden_dim, output_dim, device=device)
 
-        if distribution_fn == 'softCategorical': self.distribution_fn = D.SoftCategoricalPd
-        elif distribution_fn == 'GumbelSoftCategorical': self.distribution_fn = D.GumbelSoftCategoricalPd
-        else: raise NotImplementedError
+        if distribution_fn == 'softCategorical':
+            self.distribution_fn = D.SoftCategoricalPd
+        elif distribution_fn == 'GumbelSoftCategorical':
+            self.distribution_fn = D.GumbelSoftCategoricalPd
+        else:
+            raise NotImplementedError
 
     def forward(self, inputs):
         outputs = torch.relu(self.fc1(inputs))
@@ -207,9 +223,12 @@ class DistributionCritic(nn.Module):
                                       device=self.device,
                                       noise_layer=False)
 
-        if activate_function == 'tanh': self.activate_function = torch.nn.Tanh()
-        elif activate_function == 'softmax': self.activate_function = torch.nn.Softmax()
-        elif activate_function == 'None': self.activate_function = None
+        if activate_function == 'tanh':
+            self.activate_function = torch.nn.Tanh()
+        elif activate_function == 'softmax':
+            self.activate_function = torch.nn.Softmax()
+        elif activate_function == 'None':
+            self.activate_function = None
 
     def forward(self, inputs):
         outputs = self.QDistrbution(inputs)
@@ -255,7 +274,7 @@ class RainbowCritic(nn.Module):
         logit = q_dist * torch.linspace(self.v_min, self.v_max, self.n_atom).to(self.device)
         logit = logit.sum(dim=-1)
 
-        return {'logit':logit, 'distribution':q_dist}
+        return {'logit': logit, 'distribution': q_dist}
 
 
 class NoiseNet(nn.Module):
@@ -297,7 +316,8 @@ class RNNNet(nn.Module):
         if inputs.size(0) == last_hidden_state.size(0):
             if not mask_state is None:
                 last_hidden_state = (last_hidden_state *
-                                mask_state.repeat(1, self.rnn_layer_dim).unsqueeze(dim=-1)).transpose(0, 1).contiguous()
+                                     mask_state.repeat(1, self.rnn_layer_dim).unsqueeze(dim=-1)).transpose(0,
+                                                                                                           1).contiguous()
             outputs, last_hidden_state = self.rnn(inputs.unsqueeze(dim=0), last_hidden_state)
 
             outputs = outputs.squeeze(dim=0)
@@ -324,14 +344,15 @@ class RNNNet(nn.Module):
             # add t=0 and t=T to the list
             has_zeros = [0] + has_zeros + [timestep]
 
-            last_hidden_state = last_hidden_state.transpose(0,1)  # last_hidden_state.shape = [L, B, O]
+            last_hidden_state = last_hidden_state.transpose(0, 1)  # last_hidden_state.shape = [L, B, O]
             outputs = []
             for i in range(len(has_zeros) - 1):
                 # We can now process steps that don't have any zeros in masks together!
                 # This is much faster
                 start_index = has_zeros[i]
                 end_index = has_zeros[i + 1]
-                temp = (last_hidden_state * mask_state[start_index].view(1, -1, 1).repeat(self.rnn_layer_dim, 1, 1)).contiguous()
+                temp = (last_hidden_state * mask_state[start_index].view(1, -1, 1).repeat(self.rnn_layer_dim, 1,
+                                                                                          1)).contiguous()
                 rnn_scores, last_hidden_state = self.rnn(inputs[start_index:end_index], temp)
                 outputs.append(rnn_scores)
 
@@ -340,8 +361,7 @@ class RNNNet(nn.Module):
 
             # 展开
             outputs = outputs.reshape(timestep * batch_size, -1)
-            last_hidden_state = last_hidden_state.transpose(0, 1) # [B, L, O]
-
+            last_hidden_state = last_hidden_state.transpose(0, 1)  # [B, L, O]
 
         outputs = self.norm(outputs)
 
@@ -358,6 +378,7 @@ class ActionHead(nn.Module):
         self.gain = gain
 
         init_method = [nn.init.xavier_uniform_, nn.init.orthogonal_][use_orthogonal]
+
         def init_(m):
             return init(m, init_method, lambda x: nn.init.constant_(x, 0), gain)
 
@@ -369,6 +390,7 @@ class ActionHead(nn.Module):
 
         return dist
 
+
 class ValueHead(nn.Module):
     def __init__(self, inputs_dim, output_dim, device='cpu', use_orthogonal=True, use_Popart=True):
         super(ValueHead, self).__init__()
@@ -376,8 +398,10 @@ class ValueHead(nn.Module):
         self.inputs_dim = inputs_dim
 
         init_method = [nn.init.xavier_uniform_, nn.init.orthogonal_][use_orthogonal]
+
         def init_(m):
             return init(m, init_method, lambda x: nn.init.constant_(x, 0))
+
         if use_Popart:
             self.value = init_(PopArt(inputs_dim, output_dim, device=device))
         else:

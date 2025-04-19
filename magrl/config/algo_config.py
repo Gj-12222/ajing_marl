@@ -118,6 +118,7 @@ masac_config = dict(
     batch_size=128,
     hidden_dim=128,
     activate_fn='None',
+    distribution_fn="softCategorical",
     buffer_size=1e6,
     gamma=0.99,
     tau=5e-5,

@@ -18,9 +18,8 @@ communication actions in this array. See environment.py for more details.
 
 import imp
 import os.path as osp
+from main.tools.common import envs_paths
 
-register_env={"uav5v5": r"E:\enmotech\pycharm\ajing_marl\main\envs\custom_env\uavs_5v5.py",
-              }
 
 def make_env(scenario_name, benchmark=False):
     '''
@@ -52,21 +51,28 @@ def make_env(scenario_name, benchmark=False):
     if hasattr(scenario, 'setAction'):
         setAction_callback = scenario.setAction
 
+    done_callback, terminal_callback = None, None
+    if hasattr(scenario, "done"):
+        done_callback = scenario.done
+    if hasattr(scenario, "terminal"):
+        terminal_callback = scenario.terminal
+
     # create multiagent environment
     env = MultiAgentEnv(world=world,
                         reset_callback=scenario.reset_world,
                         reward_callback=scenario.reward,
                         observation_callback=scenario.observation,
                         info_callback=None,
-                        done_callback=None,
+                        done_callback=done_callback,
+                        terminal_callback=terminal_callback,
                         render_callback=render_callback,
                         set_render_callback=set_render_callback,
                         setAction_callback=setAction_callback)
     return env
 
 def scenario_load(name):
-    pathname = register_env.get(name, None)
+    pathname = envs_paths.get(name, None)
     if pathname is None:
-        print('no have env name', name, 'check register_env!')
+        print('no have env name', name, 'check envs_paths!')
 
     return imp.load_source('', pathname)

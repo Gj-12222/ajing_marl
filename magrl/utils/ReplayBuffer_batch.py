@@ -7,14 +7,16 @@ store experience rl in environment
 
 import numpy as np
 import random
-from algorithms.rl_utils.batch import Batch
+from magrl.utils.batch import Batch
 import copy
+
 
 class SampleIndexs:
     sample_indexs = None
 
+
 # off-policy
-class ReplayBufferTransition(object):
+class ReplayBufferTransition:
     # _storage
     # _maxsize
     # _next_idx
@@ -69,7 +71,7 @@ class ReplayBufferTransition(object):
                 self._storage[self._next_idx:] = data[:split_index]  # 4960-5000   0-40
                 self._storage[:split_index] = data[-split_index:]  # 60 - 40 = 20
             else:  # 能一次覆盖完
-                self._storage[self._next_idx: self._next_idx +1] = data
+                self._storage[self._next_idx: self._next_idx + 1] = data
 
         self._next_idx = (self._next_idx + 1) % self._maxsize  # [ 0, 5000]
 
@@ -106,7 +108,7 @@ class ReplayBufferTransition(object):
 
 
 # on-policy mappo /share
-class ReplayBufferTrajectory(object):
+class ReplayBufferTrajectory:
     # _storage
     # _maxsize
     # _next_idx
@@ -195,21 +197,23 @@ class ReplayBufferTrajectory(object):
             self._storage.available_action[self._next_idx + 1] = data.available_action.copy()
 
         if not rnn_data is None:
-            if (data.done==True).sum() > 0:
+            if (data.done == True).sum() > 0:
                 rnn_data.actor_rnn_hidden_state[data.done.squeeze(axis=0) == True] = \
-                    np.zeros(((data.done==True).sum(), self.rnn_layer_dim, self.rnn_hidden_dim), dtype=np.float32)
+                    np.zeros(((data.done == True).sum(), self.rnn_layer_dim, self.rnn_hidden_dim), dtype=np.float32)
                 rnn_data.critic_rnn_hidden_state[data.done.squeeze(axis=0) == True] = \
                     np.zeros(((data.done == True).sum(), self.rnn_layer_dim, self.rnn_hidden_dim), dtype=np.float32)
 
-            self._rnn_storage.actor_rnn_hidden_state[self._next_idx + 1] = rnn_data.actor_rnn_hidden_state.copy().squeeze(axis=0)
-            self._rnn_storage.critic_rnn_hidden_state[self._next_idx + 1] = rnn_data.critic_rnn_hidden_state.copy().squeeze(axis=0)
+            self._rnn_storage.actor_rnn_hidden_state[
+                self._next_idx + 1] = rnn_data.actor_rnn_hidden_state.copy().squeeze(axis=0)
+            self._rnn_storage.critic_rnn_hidden_state[
+                self._next_idx + 1] = rnn_data.critic_rnn_hidden_state.copy().squeeze(axis=0)
 
         self._next_idx = (self._next_idx + 1) % self._maxsize  # [ 0, 5000]
 
     # ii. get_data
     def get_data(self, _copy=True):
         if _copy == True:
-            get_data, rnn_data = copy.deepcopy(self._storage) ,copy.deepcopy(self._rnn_storage)
+            get_data, rnn_data = copy.deepcopy(self._storage), copy.deepcopy(self._rnn_storage)
         else:
             get_data, rnn_data = self._storage, self._rnn_storage
 
@@ -239,13 +243,16 @@ class ReplayBufferTrajectory(object):
                 gae = 0
                 for step in reversed(range(self._storage.reward.shape[0])):
                     if self._use_popart or self._use_valuenorm:
-                        delta = self._storage.reward[step] + self.gamma * value_normalizer.denormalize(self._storage.old_value[
-                            step + 1]) * self._storage.mask[step + 1] - value_normalizer.denormalize(self._storage.old_value[step])
+                        delta = self._storage.reward[step] + self.gamma * value_normalizer.denormalize(
+                            self._storage.old_value[
+                                step + 1]) * self._storage.mask[step + 1] - value_normalizer.denormalize(
+                            self._storage.old_value[step])
                         gae = delta + self.gamma * self.gae_lambda * self._storage.mask[step + 1] * gae
                         gae = gae * self._storage.bad_mask[step + 1]
                         self._storage.returns[step] = gae + value_normalizer.denormalize(self._storage.old_value[step])
                     else:
-                        delta = self._storage.reward[step] + self.gamma * self._storage.old_value[step + 1] * self._storage.mask[step + 1] - self._storage.old_value[step]
+                        delta = self._storage.reward[step] + self.gamma * self._storage.old_value[step + 1] * \
+                                self._storage.mask[step + 1] - self._storage.old_value[step]
                         gae = delta + self.gamma * self.gae_lambda * self._storage.mask[step + 1] * gae
                         gae = gae * self._storage.bad_mask[step + 1]
                         self._storage.returns[step] = gae + self._storage.old_value[step]
@@ -253,11 +260,17 @@ class ReplayBufferTrajectory(object):
                 self._storage.returns[-1] = next_value
                 for step in reversed(range(self._storage.reward.shape[0])):
                     if self._use_popart:
-                        self._storage.returns[step] = (self._storage.returns[step + 1] * self.gamma * self._storage.mask[step + 1] + self._storage.reward[step]) * self._storage.bad_mask[step + 1] \
-                            + (1 - self._storage.bad_mask[step + 1]) * value_normalizer.denormalize(self._storage.old_value[step])
+                        self._storage.returns[step] = (self._storage.returns[step + 1] * self.gamma *
+                                                       self._storage.mask[step + 1] + self._storage.reward[step]) * \
+                                                      self._storage.bad_mask[step + 1] \
+                                                      + (1 - self._storage.bad_mask[
+                            step + 1]) * value_normalizer.denormalize(self._storage.old_value[step])
                     else:
-                        self._storage.returns[step] = (self._storage.returns[step + 1] * self.gamma * self._storage.mask[step + 1] + self._storage.reward[step]) * self._storage.bad_mask[step + 1] \
-                            + (1 - self._storage.bad_mask[step + 1]) * self._storage.old_value[step]
+                        self._storage.returns[step] = (self._storage.returns[step + 1] * self.gamma *
+                                                       self._storage.mask[step + 1] + self._storage.reward[step]) * \
+                                                      self._storage.bad_mask[step + 1] \
+                                                      + (1 - self._storage.bad_mask[step + 1]) * \
+                                                      self._storage.old_value[step]
         else:
             if self._use_gae:
                 self._storage.old_value[-1] = next_value
@@ -266,7 +279,8 @@ class ReplayBufferTrajectory(object):
                     if self._use_popart or self._use_valuenorm:
                         delta = self._storage.reward[step] + self.gamma * \
                                 value_normalizer.denormalize(self._storage.old_value[step + 1]) * \
-                                self._storage.mask[step + 1] - value_normalizer.denormalize(self._storage.old_value[step])
+                                self._storage.mask[step + 1] - value_normalizer.denormalize(
+                            self._storage.old_value[step])
                         gae = delta + self.gamma * self.gae_lambda * self._storage.mask[step + 1] * gae
                         self._storage.returns[step] = gae + value_normalizer.denormalize(self._storage.old_value[step])
                     else:
@@ -280,11 +294,9 @@ class ReplayBufferTrajectory(object):
                     self._storage.returns[step] = self._storage.returns[step + 1] * \
                                                   self.gamma * self._storage.mask[step + 1] + self._storage.reward[step]
 
-
-
     # vi. collect
     def collect(self):
-        return self.sample(-1)
+        return self._storage
 
 
 # Prioritized Experience Replay PER

@@ -1,4 +1,5 @@
 import gym
+import torch
 from gym import spaces
 import numpy as np
 from tools.multi_discrete import MultiDiscrete
@@ -28,6 +29,7 @@ class MultiAgentEnv(gym.Env):
                  observation_callback=None,
                  info_callback=None,
                  done_callback=None,
+                 terminal_callback=None,
                  render_callback=None,
                  set_render_callback=None,
                  setAction_callback=None,
@@ -43,9 +45,10 @@ class MultiAgentEnv(gym.Env):
         self.observation_callback = observation_callback
         self.info_callback = info_callback
         self.done_callback = done_callback
-        self.render_callback = render_callback,
-        self.set_render_callback = set_render_callback,
-        self.setAction_callback = setAction_callback,
+        self.terminal_callback = terminal_callback
+        self.render_callback = render_callback
+        self.set_render_callback = set_render_callback
+        self.setAction_callback = setAction_callback
 
         # environment parameters
         #self.discrete_action_space = True
@@ -117,15 +120,20 @@ class MultiAgentEnv(gym.Env):
         obs_n = []
         reward_n = []
         done_n = []
+        terminal_n = []
         info_n = {'n': []}
         self.agents = self.world.policy_agents
+        def tensor2np(x):
+            if isinstance(x, torch.Tensor):
+                x = x.detach().cpu().numpy()
+            return x
 
+        action_n = list(map(lambda x: tensor2np(x), action_n))
         # set action for each agent
         for i, agent in enumerate(self.agents):
             if self.setAction_callback:
                 self.setAction_callback(action_n[i], agent, self.action_space[i])
             else:
-                print('use default world.set_action!')
                 self._set_action(action_n[i], agent, self.action_space[i])
 
         # advance world state
@@ -169,6 +177,7 @@ class MultiAgentEnv(gym.Env):
 
                 reward_n.append(self._get_reward(agent))
                 done_n.append(self._get_done(agent))
+                terminal_n.append(self._get_terminal(agent))
             info_n['n'].append(self._get_info(agent))
 
         # all agents get total reward in cooperative case
@@ -177,7 +186,7 @@ class MultiAgentEnv(gym.Env):
         if self.shared_reward: # if agents are coopration in environment, sellf.shared_reward = True, else is False.
             reward_n = [reward] * self.n
 
-        return obs_n, reward_n, done_n, info_n
+        return obs_n, reward_n, done_n, terminal_n, info_n
 
     def reset(self):
         # reset world
@@ -209,7 +218,12 @@ class MultiAgentEnv(gym.Env):
     def _get_done(self, agent):
         if self.done_callback is None:
             return False
-        return self.done_callback(agent, self.world)
+        return self.done_callback(agent)
+
+    def _get_terminal(self, agent):
+        if self.terminal_callback is None:
+            return False
+        return self.terminal_callback(agent, self.world)
 
     # get reward for a particular agent
     def _get_reward(self, agent):
@@ -218,7 +232,7 @@ class MultiAgentEnv(gym.Env):
         return self.reward_callback(agent, self.world)
 
     # set env action for a particular agent
-    def _set_action(self, action, agent, action_space, time=None):
+    def _set_action(self, action, agent, action_space):
         agent.action.u = np.zeros(self.world.dim_p)
         agent.action.c = np.zeros(self.world.dim_c)
         agent.action.f = np.zeros(1)

@@ -1,7 +1,8 @@
 import numpy as np
 import random
 
-class ReplayBuffer(object):
+
+class ReplayBuffer:
     # 初始化__init__和长度__len__：
     # _storage
     # _maxsize
@@ -26,6 +27,7 @@ class ReplayBuffer(object):
     def clear(self):
         self._storage = []
         self._next_idx = 0
+
     # i. add
     def add(self, obs_t, action, reward, obs_tp1, done):
         data = (obs_t, action, reward, obs_tp1, done)
@@ -35,6 +37,7 @@ class ReplayBuffer(object):
         else:
             self._storage[self._next_idx] = data
         self._next_idx = (self._next_idx + 1) % self._maxsize
+
     # ii. _encode_sample
     def _encode_sample(self, idxes):
         obses_t, actions, rewards, obses_tp1, dones = [], [], [], [], []
@@ -47,6 +50,7 @@ class ReplayBuffer(object):
             obses_tp1.append(np.array(obs_tp1, copy=False))
             dones.append(done)
         return np.array(obses_t), np.array(actions), np.array(rewards), np.array(obses_tp1), np.array(dones)
+
     # iii. make_index
     def make_index(self, batch_size):
         return [random.randint(0, len(self._storage) - 1) for _ in range(batch_size)]
@@ -59,6 +63,7 @@ class ReplayBuffer(object):
 
     def sample_index(self, idxes):
         return self._encode_sample(idxes)
+
     # v. sample
     def sample(self, batch_size):
         """Sample a batch of experiences.
@@ -87,11 +92,8 @@ class ReplayBuffer(object):
         else:
             idxes = range(0, len(self._storage))
         return self._encode_sample(idxes)
+
     # vi. collect
     #     return sample(-1)
     def collect(self):
         return self.sample(-1)
-
-# prioritized Experience Relpay PRE 优先回放
-class PRE(ReplayBuffer):
-    pass

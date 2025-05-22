@@ -184,4 +184,4 @@ if __name__ == '__main__':
     # 开始训练
     trainer.start_train()
     # 训练完最后评估一次
-    trainer.eval()
+    trainer.evaluate()

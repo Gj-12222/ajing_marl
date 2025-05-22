@@ -55,10 +55,11 @@ python torch_train.py
 ## 欢迎引用
 如果您觉得我们的资源对您有帮助，欢迎引用我们的相关论文：
 ```
-@article{2024masac4uavs,
-  title={MADRL-based UAV swarm non-cooperative game under incomplete information},
-  author={Ershen WANG, Fan LIU, Chen HONG, Jing GUO, Lin ZHAO, Jian XUE, Ning HE},
-  journal={Chinese Journal of Aeronautics},
-  year={2024}
+@misc{MAGRL,
+  author       = {Gj-12222},
+  title        = {{MAGRL}: Multi-Agent Game with Reinforcement Learning},
+  year         = {2025},
+  note         = {\texttt{https://github.com/Gj-12222/ajing_marl}},
 }
+
 ```

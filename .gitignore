@@ -157,4 +157,4 @@ cython_debug/
 magrl/algorithms/tf1
 
 magrl/saves/*
-margl/pilot/*
+magrl/pilot/*

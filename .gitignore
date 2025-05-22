@@ -156,4 +156,4 @@ cython_debug/
 
 magrl/algorithms/tf1
 
-magrl/saves
+magrl/saves/

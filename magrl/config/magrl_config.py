@@ -1,9 +1,11 @@
-## 配置文件
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
+## 配置文件
 import os
 import torch
-from .base import Singleton
 
+from . import Singleton
 
 # 定义训练所需的参数：
 #     环境相关参数
@@ -12,8 +14,12 @@ from .base import Singleton
 #     测试阶段的参数
 # Environment环境相关参数
 
+
 class TrainConfig(metaclass=Singleton):
     def __init__(self):
+        # 用tf1还是torch， 默认torch
+        self.nn_package = "torch"
+
         self.scenario_name = "uav_5v5"  # 场景
         self.num_adversaries = 5  # red
         self.num_agents = 5  # blue
@@ -60,3 +66,17 @@ class TrainConfig(metaclass=Singleton):
         self.fix_alpha = True
         self.use_target_actor = True
         self.epsilon = 1e-6
+
+
+def get_config(env_name, algo_name):
+    r"""
+
+    根据env_name, algo_name提取对应的config文件，返回config超参数
+
+    :param env_name:
+    :param algo_name:
+    :return:
+    """
+    config = {}
+    return config
+

@@ -1,39 +1,64 @@
-# marl
- This is the MARL algorithms package.
- 
- The code style of this library from the openAI maddpg(https://github.com/openai/maddpg) and default environment refers to MPE(https://github.com/openai/multiagent-particle-envs), as well other libraries.
- 
- The environment only integrates MPE(unable to use MPE default environment because MPE core file has been modified), and the algorithm currently only has the form of CTDE and independent learning(IL) + DRL.
- 
- In addition, some public RL libraries are also referenced, such as(https://github.com/kaixindelele/DRLib, https://github.com/openai/spinningup)
+# MAGRL
+MAGRL(**M**ulti-**A**gent **G**ame with **R**einforcement **L**earning)是一个以MAG为背景的MARL(**M**ulti-**A**gent **R**einforcement **L**earning算法工具包。
+这个项目的初心是记录读研期间学习的MARL相关算法代码实践，以及给有需要的人参考借鉴。时隔三年，确立了 MAGRL。目标是在添加记录工作期间学习的RL相关算法和应用，同时规范代码编程能力。MAGRL 还是个粗糙的开源项目，欢迎多提issue。
 
-# Install
+*  MAGRL 包括两大部分：
+  * Env： RL所需的交互环境，有各种Env，也支持自定义Env
+  * Algo：(MA)RL的相关算法，分有CTDE和DTDE，也支持自定义Algorithms
 
-### Requirenments
-python  v3.7.0+
 
-Windows 10 or Linux x86\_84
+## 特性
+* (2022/07)添加**UAV Swarm Env**、tensorflow1.x版本
+* (2025/01)重构框架结构、算法支持**pytorch**、新增多种算法、添加Multi-ATSC Env
+* (2025/02)弃用tf_train.py，后续版本删除tf_train.py
 
-### Install steps
+## 安装
+### 前提条件
+```plantuml
+python  v3.10.0+
+Windows or Linux x86\_84
+```
 
-You can install the latest version of the from a cloned Git repository:
+### 安装步骤
 
+You can install the latest version of the form a cloned Git repository:
+```commandline
 git clone https://github.com/Gj-12222/ajing_marl.git
-
 cd ajing_marl
-
 pip install -r requirements.txt
+```
 
-### run 
 
-set source 'main' file to running code.
+### 简单运行
+```commandline
+cd magrl/train
+python torch_train.py
+```
 
-cd main
+## 算法性能报告
+* 暂缺
 
-python train.py
 
-### Comments
+## Todo List
+* Env：
+* Algo：
+* Result：
 
-The 'main' file is completed.
 
-The 'test' file is uncompleted.
+## 参考项目
+* MADDPG(https://github.com/openai/maddpg)
+* MPE(https://github.com/openai/multiagent-particle-envs)
+* DRLib(https://github.com/kaixindelele/DRLib)
+* Spinning-up(https://github.com/openai/spinningup)
+
+
+## 欢迎引用
+如果您觉得我们的资源对您有帮助，欢迎引用我们的相关论文：
+```
+@article{2024masac4uavs,
+  title={MADRL-based UAV swarm non-cooperative game under incomplete information},
+  author={Ershen WANG, Fan LIU, Chen HONG, Jing GUO, Lin ZHAO, Jian XUE, Ning HE},
+  journal={Chinese Journal of Aeronautics},
+  year={2024}
+}
+```

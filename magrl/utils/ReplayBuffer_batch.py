@@ -5,15 +5,15 @@ store experience rl in environment
 
 '''
 
-import numpy as np
-import random
-from magrl.utils.batch import Batch
 import copy
+import random
+import numpy as np
+
+from .batch import Batch
 
 
 class SampleIndexs:
     sample_indexs = None
-
 
 # off-policy
 class ReplayBufferTransition:

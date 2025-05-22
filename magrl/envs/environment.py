@@ -1,10 +1,11 @@
 import gym
-import torch
-from gym import spaces
-import numpy as np
-from tools.multi_discrete import MultiDiscrete
 import math
 import copy
+import torch
+import numpy as np
+from gym import spaces
+
+from magrl.utils.multi_discrete import MultiDiscrete
 
 """
    MultiAgentEnv input parms

@@ -1,0 +1,21 @@
+learn_type: 'off_policy'
+action_select: 'distribution'  # sample, distribution
+algo_type: 'policy_based'  # value_based, policy_based
+obs_list: []
+reward_list: []
+metric_list: []
+reward_weight: []
+epochs: 1
+episodes: 200
+max_episode_len: 3600
+network_structure: 'no_share'
+batch_size: 128
+hidden_dim: 128
+distribution_fn: 'softCategorical'  # softCategorical, GumbelSoftCategorical
+buffer_size: 1e6
+gamma: 0.99
+tau: 5e-5
+critic_lr: 4e-4
+actor_lr: 5e-4
+soft_update_freq: 100
+update_step: 100 

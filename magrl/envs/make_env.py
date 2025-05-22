@@ -17,8 +17,7 @@ communication actions in this array. See environment.py for more details.
 """
 
 import imp
-import os.path as osp
-from main.tools.common import envs_paths
+from magrl.config.model_config import envs_paths
 
 
 def make_env(scenario_name, benchmark=False):
@@ -38,7 +37,7 @@ def make_env(scenario_name, benchmark=False):
         .action_space       :   Returns the action space for each agent
         .n                  :   Returns the number of Agents
     '''
-    from envs.environment import MultiAgentEnv
+    from magrl.envs.environment import MultiAgentEnv
     # load scenario from script
     scenario = scenario_load(scenario_name).Scenario()
     # create world

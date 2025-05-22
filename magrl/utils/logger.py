@@ -1,7 +1,7 @@
 import logging
 from logging.config import dictConfig
 
-_LIBRARY_NAME = 'moaa'
+_LIBRARY_NAME = 'magrl'
 _FORMAT = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 _DATE_FORMAT = "%m/%d/%Y %H:%M:%S"
 _STREAM_HANDLER_LEVEL = "INFO"

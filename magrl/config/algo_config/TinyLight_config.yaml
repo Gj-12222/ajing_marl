@@ -1,0 +1,34 @@
+learn_type: 'off_policy'
+action_select: 'sample'  # sample, distribution
+algo_type: 'value_based'  # value_based, policy_based
+obs_list:
+  - "phase_2_num_vehicle"
+  - "phase_2_num_waiting_vehicle"
+  - "phase_2_sum_waiting_time"
+  - "phase_2_delay"
+  - "phase_2_pressure"
+  - "inlane_2_num_vehicle"
+  - "inlane_2_num_waiting_vehicle"
+  - "inlane_2_sum_waiting_time"
+  - "inlane_2_delay"
+  - "inlane_2_pressure"
+  - "inter_2_current_phase"
+reward_list: ["inter_2_pressure"]
+reward_weight: [-1.0]
+metric_list:
+  - "world_2_average_travel_time"
+  - "world_2_average_queue_length"
+  - "world_2_average_delay"
+n_layer_1_dim: [16, 18, 20, 22, 24]
+n_layer_2_dim: [16, 18, 20, 22, 24]
+learning_rate: 0.001
+epsilon: 0.1
+buffer_size: 100000
+batch_size: 32
+gamma: 0.9
+tau: 0.1
+max_episode_len: 3600
+epochs: 1
+episodes: 200
+network_structure: 'no_share'
+update_step: 100 

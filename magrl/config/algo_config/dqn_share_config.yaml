@@ -1,0 +1,23 @@
+learn_type: 'off_policy'
+action_select: 'sample'  # sample, distribution
+algo_type: 'value_based'  # value_based, policy_based
+obs_list: ['agent_2_index']
+reward_list: []
+metric_list: []
+reward_weight: []
+network_structure: 'share'
+epochs: 1
+episodes: 200
+max_episode_len: 3600
+batch_size: 128
+hidden_dim: 128
+activate_fn: 'None'
+buffer_size: 1e6
+epsilon: 0.8
+epsilon_min: 0.000001
+epsilon_decay: 0.95
+gamma: 0.99
+tau: 5e-5
+critic_lr: 4e-4
+soft_update_freq: 100
+update_step: 100 

@@ -1,0 +1,56 @@
+learn_type: 'on_policy'
+action_select: 'sample'  # sample, distribution
+algo_type: 'policy_based'  # value_based, policy_based
+
+# env params
+obs_list: []
+reward_list: []
+metric_list: []
+reward_weight: []
+
+# ppo params
+epochs: 1
+episodes: 200
+max_episode_len: 3600
+use_clip_valueLoss: true
+clip_param: 0.2
+repeat_epoch: 3  # repeat times
+mini_batch: 4  # 最小batch数
+timestep: 50  # 每个最小batch数的序列数
+entropy_coef: 0.01
+valueLoss_coef: 0.5
+use_max_gradNorm: true
+max_gradNorm: 10.0
+use_gae: true
+gae_lambda: 0.95
+use_proper_time_limits: false
+use_huber_loss: false
+use_value_active_masks: true
+use_policy_active_masks: true
+huber_delta: 10.0
+gamma: 0.99
+tau: 5e-5
+soft_update_freq: 100
+update_step: 100
+
+# network params
+network_structure: 'no_share'
+batch_size: 128
+hidden_dim: 256
+use_popart: false
+use_valueNorm: true
+use_featureNorm: true
+use_orthogonal: true
+last_action_layer_gain: 0.01
+activate_fn: 'None'
+
+# rnn params
+use_rnn_policy: true
+rnn_layer_dim: 3
+
+# replay buffer params
+buffer_size: 1e6
+
+# optimizer params
+critic_lr: 4e-4
+actor_lr: 5e-4 

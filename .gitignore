@@ -155,3 +155,5 @@ cython_debug/
 *.iml
 
 magrl/algorithms/tf1
+
+magrl/saves
